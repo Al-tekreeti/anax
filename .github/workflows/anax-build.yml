@@ -28,8 +28,9 @@ jobs:
       - run: |
           go version
           go get github.com/tools/godep
+          echo $GOPATH
 
       # build anax binaries
-      - name: Build anax binaries
-        run: make 
+      # - name: Build anax binaries
+      #  run: make 
           
