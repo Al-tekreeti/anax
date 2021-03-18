@@ -25,5 +25,11 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: '1.14.1'
-      - run: go version
+      - run: |
+          go version
+          go get github.com/tools/godep
+
+      # build anax binaries
+      - name: Build anax binaries
+        run: make 
           
