@@ -27,16 +27,14 @@ jobs:
           go-version: '1.14.1'
 
       - name: Install dependencies
-        run: ls -la /usr
-          # sudo apt-get update
-          # go get github.com/tools/godep
-          # go get -u golang.org/x/lint/golint
+        run: |
+          sudo apt-get update
+          go get github.com/tools/godep
+          go get -u golang.org/x/lint/golint
           # VAR=$(go list -f {{.Target}} golang.org/x/lint/golint)
           # export PATH=$PATH:$VAR
 
       # build anax binaries
       - name: Build anax binaries
-        run: |
-                cd ~/src
-                make verbose=y
+        run: make verbose=y
           
