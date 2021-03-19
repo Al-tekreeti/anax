@@ -35,11 +35,8 @@ jobs:
           go get -u golang.org/x/lint/golint
           VAR=$(go list -f {{.Target}} golang.org/x/lint/golint)
           export PATH=$PATH:$VAR
-          echo $PATH
 
       # build anax binaries
       - name: Build anax binaries
-        run: |
-          make gopathlinks
-          make deps
+        run: make lint
           
