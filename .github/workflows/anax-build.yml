@@ -20,7 +20,7 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
         with:
-          path: /src/github.com/Al-tekreeti/anax
+          path: ${HOME}/src/github.com/Al-tekreeti/anax
       
       # prepare the environment
       - name: Set up golang 1.14.1
@@ -40,5 +40,5 @@ jobs:
 
       # build anax binaries
       - name: Build anax binaries
-        run: cd /src/github.com/Al-tekreeti/anax && make verbose=y
+        run: cd ${HOME}/src/github.com/Al-tekreeti/anax && make verbose=y
           
