@@ -19,30 +19,20 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
+        with:
+          path: $HOME/src
       
       # prepare the environment
       - name: Set up golang 1.14.1
-        # uses: actions/setup-go@v2
-        # with:
-        #  go-version: '1.14.1'
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.14.1'
         run: |
-          # go version
-          apt-get update -qq && apt-get install -y \
-              wget \
-              gnupg2 \
-              software-properties-common
-          mkdir $HOME/go
-          export GO_VERSION=1.14.1
-          wget https://storage.googleapis.com/golang/go${GO_VERSION}.linux-amd64.tar.gz
-          tar -xf go${GO_VERSION}.linux-amd64.tar.gz
-          sudo mv go /usr/local
-          /usr/local/go/bin/go get github.com/tools/godep
-          sudo ln -s /usr/local/go/bin/go /usr/local/bin/go
-          export GOPATH=$HOME/go
+          go version
 
       - name: Install dependencies
-        run: |
-          sudo apt-get update
+        run: ls -la
+          # sudo apt-get update
           # go get github.com/tools/godep
           # go get -u golang.org/x/lint/golint
           # VAR=$(go list -f {{.Target}} golang.org/x/lint/golint)
