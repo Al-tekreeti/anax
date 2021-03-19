@@ -37,10 +37,11 @@ jobs:
           mv go /usr/local
           /usr/local/go/bin/go get github.com/tools/godep
           ln -s /usr/local/go/bin/go /usr/local/bin/go
+          export GOPATH=$HOME/go
 
       - name: Install dependencies
         run: |
-          # sudo apt-get update
+          sudo apt-get update
           # go get github.com/tools/godep
           # go get -u golang.org/x/lint/golint
           # VAR=$(go list -f {{.Target}} golang.org/x/lint/golint)
