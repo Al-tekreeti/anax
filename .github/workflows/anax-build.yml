@@ -34,7 +34,7 @@ jobs:
           go get github.com/tools/godep
           go get -u golang.org/x/lint/golint
           go list -f {{.Target}} golang.org/x/lint/golint
-          expot PATH=$PATH:go list -f {{.Target}} golang.org/x/lint/golint
+          export PATH=$PATH:go list -f {{.Target}} golang.org/x/lint/golint
           echo $PATH
 
       # build anax binaries
