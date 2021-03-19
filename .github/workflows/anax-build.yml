@@ -17,9 +17,6 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out the vm 
-      - name: Explore the vm
-        run: ls -la
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
       
@@ -53,5 +50,5 @@ jobs:
 
       # build anax binaries
       - name: Build anax binaries
-        run: make 
+        run: sudo make 
           
