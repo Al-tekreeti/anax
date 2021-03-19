@@ -38,5 +38,5 @@ jobs:
 
       # build anax binaries
       - name: Build anax binaries
-        run: make
+        run: make verbose=y
           
