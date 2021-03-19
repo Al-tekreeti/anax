@@ -19,8 +19,6 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
-        with:
-          path: ${HOME}/src/github.com/Al-tekreeti/anax
       
       # prepare the environment
       - name: Set up golang 1.14.1
@@ -31,8 +29,6 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          mkdir ${HOME}/go
-          export GOPATH=${HOME}/go
           go get github.com/tools/godep
           # go get -u golang.org/x/lint/golint
           # VAR=$(go list -f {{.Target}} golang.org/x/lint/golint)
@@ -40,5 +36,5 @@ jobs:
 
       # build anax binaries
       - name: Build anax binaries
-        run: cd ${HOME}/src/github.com/Al-tekreeti/anax && make verbose=y
+        run: make verbose=y
           
