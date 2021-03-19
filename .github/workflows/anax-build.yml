@@ -27,7 +27,7 @@ jobs:
           go-version: '1.14.1'
 
       - name: Install dependencies
-        run: ls -la
+        run: ls -la /usr
           # sudo apt-get update
           # go get github.com/tools/godep
           # go get -u golang.org/x/lint/golint
