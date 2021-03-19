@@ -38,6 +38,5 @@ jobs:
 
       # build anax binaries
       - name: Build anax binaries
-        # run: make verbose=y
-        run: go env
+        run: make 
           
