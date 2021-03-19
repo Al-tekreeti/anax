@@ -29,9 +29,7 @@ jobs:
           go version
 
       - name: Install dependencies
-        run: |
-          ls -la
-          go env
+        run: ls -la
           # sudo apt-get update
           # go get github.com/tools/godep
           # go get -u golang.org/x/lint/golint
@@ -41,4 +39,5 @@ jobs:
       # build anax binaries
       - name: Build anax binaries
         # run: make verbose=y
+        run: go env
           
