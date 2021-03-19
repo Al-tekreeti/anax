@@ -31,5 +31,7 @@ jobs:
 
       # build anax binaries
       - name: Build anax binaries
-        run: make gopathlinks
+        run: |
+          make gopathlinks
+          make deps
           
