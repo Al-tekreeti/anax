@@ -33,7 +33,7 @@ jobs:
           echo $PWD
           which go
           go version
-          echo ${GOPATH}
+          echo ${{GOPATH}}
           go env
          # sudo apt-get update
          # go get github.com/tools/godep
