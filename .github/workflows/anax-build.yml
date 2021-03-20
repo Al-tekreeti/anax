@@ -31,11 +31,9 @@ jobs:
           sudo apt-get update
           go get -u golang.org/x/lint/golint
           sudo npm install -g jshint
-          which golint
-          which jshint
-          echo $PATH
+    
 
       # build anax binaries
-      # - name: Build anax binaries
-      # run: make verbose=y
+      - name: Build anax binaries
+        run: make verbose=y
           
