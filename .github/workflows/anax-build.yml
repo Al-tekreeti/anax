@@ -28,10 +28,11 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt-get update
+          sudo apt update
           go get -u golang.org/x/lint/golint
+          npm install -g jshint
           which golint
-          which go
+          which jshint
           echo $PATH
 
       # build anax binaries
