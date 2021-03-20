@@ -28,9 +28,9 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt update
+          sudo apt-get update
           go get -u golang.org/x/lint/golint
-          npm install -g jshint
+          sudo npm install -g jshint
           which golint
           which jshint
           echo $PATH
