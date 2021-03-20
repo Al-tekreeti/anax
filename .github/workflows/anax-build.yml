@@ -24,7 +24,7 @@ jobs:
       - name: Set up golang 1.14.1
         uses: actions/setup-go@v2
         with:
-           go-version: '1.14.1'
+           go-version: '1.15.8'
 
       - name: Install dependencies
         run: |
@@ -35,5 +35,5 @@ jobs:
 
       # build anax binaries
       - name: Build anax binaries
-        run: make -d
+        run: make
           
