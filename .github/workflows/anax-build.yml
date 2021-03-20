@@ -21,20 +21,24 @@ jobs:
       - uses: actions/checkout@v2
       
       # prepare the environment
-      - name: Set up golang 1.14.1
-        uses: actions/setup-go@v2
-        with:
-          go-version: '1.14.1'
+      # - name: Set up golang 1.14.1
+      # uses: actions/setup-go@v2
+      # with:
+      # go-version: '1.14.1'
 
       - name: Install dependencies
         run: |
-          sudo apt-get update
-          go get github.com/tools/godep
+          echo $PATH
+          echo $HOME
+          echo $PWD
+          ls -la
+         # sudo apt-get update
+         # go get github.com/tools/godep
           # go get -u golang.org/x/lint/golint
           # VAR=$(go list -f {{.Target}} golang.org/x/lint/golint)
           # export PATH=$PATH:$VAR
 
       # build anax binaries
-      - name: Build anax binaries
-        run: make verbose=y
+      # - name: Build anax binaries
+      # run: make verbose=y
           
