@@ -28,18 +28,14 @@ jobs:
 
       - name: Install dependencies
         run: |
-          echo $PATH
-          echo $HOME
-          echo $PWD
           which go
-          go version
-          echo ${{GOPATH}}
-          go env
-         # sudo apt-get update
+          sudo apt-get update
          # go get github.com/tools/godep
-          # go get -u golang.org/x/lint/golint
+          go get -u golang.org/x/lint/golint
           # VAR=$(go list -f {{.Target}} golang.org/x/lint/golint)
           # export PATH=$PATH:$VAR
+          which golint
+          echo $PATH
 
       # build anax binaries
       # - name: Build anax binaries
