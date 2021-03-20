@@ -43,5 +43,5 @@ jobs:
 
       # build anax binaries
       - name: Build anax binaries
-        run: make lint
+        run: cd ${GOPATH}/src/github.com/Al-tekreeti/anax && make lint
           
