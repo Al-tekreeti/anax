@@ -23,7 +23,7 @@ jobs:
         with:
            path: ${GOPATH}/src/github.com/Al-tekreeti/anax
         env:
-           GOPATH: /home/runner/work/anax/go
+           GOPATH: /home/runner/work/anax/anax/go
       
       # prepare the environment
       - name: Set up golang 1.14.1
@@ -42,5 +42,5 @@ jobs:
       - name: Build anax binaries
         run: cd ${GOPATH}/src/github.com/Al-tekreeti/anax && make lint
         env:
-          GOPATH: /home/runner/work/anax/go
+          GOPATH: /home/runner/work/anax/anax/go
           
