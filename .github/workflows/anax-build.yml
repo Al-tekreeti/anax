@@ -38,7 +38,7 @@ jobs:
 
       # build anax binaries
       - name: Build anax binaries
-        run: cd ${GOPATH}/src/github.com/Al-tekreeti/anax && make all
+        run: cd ${GOPATH}/src/github.com/Al-tekreeti/anax && make check
         env:
           GOPATH: /home/runner/work/anax/anax/go
           
