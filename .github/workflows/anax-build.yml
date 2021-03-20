@@ -34,6 +34,7 @@ jobs:
           which go
           go version
           echo $GOPATH
+          go env
          # sudo apt-get update
          # go get github.com/tools/godep
           # go get -u golang.org/x/lint/golint
