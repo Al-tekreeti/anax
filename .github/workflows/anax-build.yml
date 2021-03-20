@@ -21,9 +21,7 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
         with:
-           path: ${GOPATH}/src/github.com/Al-tekreeti/anax
-        env:
-           GOPATH: /home/runner/work/anax/anax/go
+           path: /src/github.com/Al-tekreeti/anax
       
       # prepare the environment
       - name: Set up golang 1.14.1
