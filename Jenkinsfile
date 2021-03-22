@@ -4,7 +4,6 @@ pipeline {
         stage('Build Anax'){
             steps {
                 sh 'echo "Building anax binaries"'
-                sh 'echo $PATH'
 		sh '''
 			#!/usr/bin/env bash
 		   	go version
@@ -12,6 +11,8 @@ pipeline {
 			echo $PATH
 			echo $GOPATH
 			echo $PWD
+			echo $HOME
+			echo ${env.WORKSPACE}
 		'''
             }
         }
