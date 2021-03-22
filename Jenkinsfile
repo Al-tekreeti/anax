@@ -10,6 +10,7 @@ pipeline {
 		sh '''
 			#!/usr/bin/env bash
 			ln -s $WORKSPACE $GOPATH/src/github.com/Al-tekreeti/anax
+			make
 		'''
             }
         }
