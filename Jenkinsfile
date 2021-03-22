@@ -12,7 +12,8 @@ pipeline {
 			echo $GOPATH
 			echo $PWD
 			echo $HOME
-			echo ${env.WORKSPACE}
+			ls $PWD -la
+			ls $HOME -la
 		'''
             }
         }
