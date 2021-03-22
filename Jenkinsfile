@@ -7,7 +7,7 @@ pipeline {
 		sh '''
 			#!/usr/bin/env bash
 		   	echo $USER
-			ls /home/$USER
+			ls /home/mustafa
 		'''
             }
         }
