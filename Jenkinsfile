@@ -9,7 +9,7 @@ pipeline {
                 sh 'echo "Building anax binaries"'
 		sh '''
 			#!/usr/bin/env bash
-		   	make
+		   	echo ${GOPATH}
 		'''
             }
         }
