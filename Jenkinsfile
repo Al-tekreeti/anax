@@ -9,7 +9,7 @@ pipeline {
                 sh 'echo "Building anax binaries"'
 		sh '''
 			#!/usr/bin/env bash
-			ln -s $WORKSPACE $HOME/Projects/github.com/Al-tekreeti/anax
+			ln -s $WORKSPACE $GOPATH/Projects/github.com/Al-tekreeti/anax
 			make
 		'''
             }
