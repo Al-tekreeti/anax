@@ -9,10 +9,7 @@ pipeline {
                 sh 'echo "Building anax binaries"'
 		sh '''
 			#!/usr/bin/env bash
-			echo ${HOME}
-		   	echo ${GOPATH}
-			echo $PWD
-			echo $WORKSPACE
+			ln -s $WORKSPACE $GOPATH/src/github.com/Al-tekreeti/anax
 		'''
             }
         }
