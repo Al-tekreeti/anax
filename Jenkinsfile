@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-	GOPATH = '/home/mustafa/go'
+	GOPATH = '/home/mustafa'
     }
     stages {
         stage('Build Anax'){
