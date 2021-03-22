@@ -11,6 +11,8 @@ pipeline {
 			#!/usr/bin/env bash
 			echo ${HOME}
 		   	echo ${GOPATH}
+			echo $PWD
+			echo $WORKSPACE
 		'''
             }
         }
