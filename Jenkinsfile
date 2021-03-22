@@ -4,7 +4,7 @@ pipeline {
         stage('Build Anax'){
             steps {
                 sh 'echo "Building anax binaries"'
-                sh 'echo $GOPATH'
+                sh 'echo $PATH'
             }
         }
     }
