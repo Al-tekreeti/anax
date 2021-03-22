@@ -6,9 +6,9 @@ pipeline {
                 sh 'echo "Building anax binaries"'
 		sh '''
 			#!/usr/bin/env bash
-			mkdir -p $HOME/go
+			mkdir -p $HOME/go/src/github.com/Al-tekreeti/anax
 			export GOPATH=$HOME/go
-			ln -s $WORKSPACE $GOPATH/src/github.com/Al-tekreeti/anax
+			ln -fs $WORKSPACE $GOPATH/src/github.com/Al-tekreeti/anax
 			make
 		'''
             }
