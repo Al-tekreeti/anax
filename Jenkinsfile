@@ -9,7 +9,7 @@ pipeline {
 			mkdir -p $HOME/go/src/github.com/Al-tekreeti/anax
 			export GOPATH=$HOME/go
 			export PATH=$PATH:/usr/local/go/bin
-			ln -fs $WORKSPACE $GOPATH/src/github.com/Al-tekreeti/anax
+			#ln -fs $WORKSPACE $GOPATH/src/github.com/Al-tekreeti/anax
 			make 
 		'''
             }
