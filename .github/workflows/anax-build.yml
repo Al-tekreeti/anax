@@ -47,6 +47,9 @@ jobs:
           sudo usermod -aG microk8s $USER
           mkdir $HOME/.kube
           sudo microk8s config > $HOME/.kube/config
+          export KUBECONFIG=$HOME/.kube/config
+          echo $KUBECONFIG
+          ls -la $HOME/.kube/
           echo "Changing the ownership of .kube dir"
           sudo chown -fR $USER ~/.kube
           echo "Re-entering the session"
