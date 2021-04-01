@@ -47,8 +47,9 @@ jobs:
           sudo usermod -aG microk8s $USER
           echo "Changing the ownership of .kube dir"
           sudo chown -fR $USER ~/.kube
-          echo "Checking the status of k8s"
-          sudo microk8s status --wait-ready
+          su - $USER
+          echo "Starting k8s"
+          microk8s start
 
       # build anax binaries
       - name: Build anax binaries
