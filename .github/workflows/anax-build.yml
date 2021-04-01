@@ -41,9 +41,13 @@ jobs:
           sudo chown -fR $USER ~/.docker
           docker version
           # Installing a single node k8s
+          echo "Installing k8s"
           sudo snap install microk8s --classic --channel=1.18/stable
+          echo "Adding user to k8s group"
           sudo usermod -aG microk8s $USER
+          echo "Changing the ownership of .kube dir"
           sudo chown -fR $USER ~/.kube
+          echo "Checking the status of k8s"
           microk8s status
 
       # build anax binaries
