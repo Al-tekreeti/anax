@@ -47,9 +47,9 @@ jobs:
           sudo usermod -aG microk8s $USER
           mkdir $HOME/.kube
           sudo microk8s config > $HOME/.kube/config
-          # echo "Changing the ownership of .kube dir"
+          echo "Changing the ownership of .kube dir"
           sudo chown -fR $USER ~/.kube
-          # echo "Re-entering the session"
+          echo "Re-entering the session"
           sudo su - $USER
           echo "Checking the status of k8s"
           microk8s status --wait-ready
