@@ -35,9 +35,15 @@ jobs:
           sudo apt-get update
           go get -u golang.org/x/lint/golint
           sudo npm install -g jshint
+          # install docker
+          curl -fsSL git.docker.com | bash
+          sudo usermod -aG docker $USER
+          newgrp docker
+          sudo chown -fR $USER ~/.docker
+          docker version
     
 
       # build anax binaries
       - name: Build anax binaries
         run: cd ${GOPATH}/src/github.com/Al-tekreeti/anax && make
-          
+ 
