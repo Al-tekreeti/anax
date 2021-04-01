@@ -45,8 +45,10 @@ jobs:
           sudo snap install microk8s --classic --channel=1.18/stable
           echo "Adding user to k8s group"
           sudo usermod -aG microk8s $USER
+          mkdir $HOME/.kube
+          sudo microk8s config > $HOME/.kube/config
           # echo "Changing the ownership of .kube dir"
-          # sudo chown -fR $USER ~/.kube
+          sudo chown -fR $USER ~/.kube
           # echo "Re-entering the session"
           sudo su - $USER
           echo "Checking the status of k8s"
