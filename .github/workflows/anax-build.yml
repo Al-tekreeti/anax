@@ -40,8 +40,11 @@ jobs:
           newgrp docker
           sudo chown -fR $USER ~/.docker
           docker version
-          docker ps
-    
+          # Installing a single node k8s
+          sudo snap install microk8s --classic --channel=1.18/stable
+          sudo usermod -aG microk8s $USER
+          sudo chown -fR $USER ~/.kube
+          microk8s status
 
       # build anax binaries
       - name: Build anax binaries
