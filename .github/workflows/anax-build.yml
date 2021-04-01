@@ -49,8 +49,8 @@ jobs:
           # sudo chown -fR $USER ~/.kube
           # echo "Re-entering the session"
           # su - $USER
-          echo "Snap version"
-          snap version
+          echo "Checking the status of k8s"
+          microk8s status --wait-ready
 
       # build anax binaries
       - name: Build anax binaries
