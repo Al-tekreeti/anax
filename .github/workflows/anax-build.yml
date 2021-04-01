@@ -47,8 +47,8 @@ jobs:
           sudo usermod -aG microk8s $USER
           # echo "Changing the ownership of .kube dir"
           # sudo chown -fR $USER ~/.kube
-          echo "Re-entering the session"
-          su - $USER
+          # echo "Re-entering the session"
+          # su - $USER
           echo "Snap version"
           snap version
 
