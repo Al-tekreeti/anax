@@ -51,7 +51,7 @@ jobs:
           echo $KUBECONFIG
           ls -la $HOME/.kube/
           echo "Changing the ownership of .kube dir"
-          sudo chown -fR $USER ~/.kube
+          sudo chown -fR $USER $HOME/.kube
           echo "Re-entering the session"
           sudo su - $USER
           echo "Checking the status of k8s"
