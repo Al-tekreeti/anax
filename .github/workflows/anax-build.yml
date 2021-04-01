@@ -36,7 +36,7 @@ jobs:
           go get -u golang.org/x/lint/golint
           sudo npm install -g jshint
           # install docker
-          curl -fsSL git.docker.com | bash
+          curl -fsSL get.docker.com | bash
           sudo usermod -aG docker $USER
           newgrp docker
           sudo chown -fR $USER ~/.docker
