@@ -48,8 +48,8 @@ jobs:
           echo "Changing the ownership of .kube dir"
           sudo chown -fR $USER ~/.kube
           su - $USER
-          echo "Starting k8s"
-          microk8s start
+          echo "Snap version"
+          snap version
 
       # build anax binaries
       - name: Build anax binaries
