@@ -44,11 +44,13 @@ jobs:
           echo "Installing k8s"
           sudo snap install microk8s --classic --channel=1.18/stable
           echo "Adding user to k8s group"
-          sudo usermod -aG microk8s $USER
+          # sudo usermod -aG microk8s $USER
           # echo "Changing the ownership of .kube dir"
           # sudo chown -fR $USER ~/.kube
           # echo "Re-entering the session"
           # su - $USER
+          sudo usermod -a -G microk8s runner
+          sudo chown -f -R runner ~/.kube
           echo "Checking the status of k8s"
           microk8s status --wait-ready
 
