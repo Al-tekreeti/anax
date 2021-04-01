@@ -48,7 +48,7 @@ jobs:
           # echo "Changing the ownership of .kube dir"
           # sudo chown -fR $USER ~/.kube
           # echo "Re-entering the session"
-          newgrp microk8s
+          su - $USER
           echo "Checking the status of k8s"
           microk8s status --wait-ready
 
