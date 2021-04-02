@@ -52,7 +52,7 @@ jobs:
           export KUBECONFIG=$HOME/.kube/config
           echo "Changing the ownership of .kube dir"
           sudo chown -f -R $USER $HOME/.kube
-          ls -la $PWD
+          ls -la /var/snap/microk8s/current/credentials/
           echo "Re-entering the session"
           sudo su - $USER
           echo "Checking the status of k8s"
