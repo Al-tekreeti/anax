@@ -45,7 +45,9 @@ jobs:
           sudo snap install microk8s --classic --channel=1.18/stable
           echo "Adding user to k8s group"
           sudo usermod -aG microk8s $USER
+          echo "Creating .kube dir"
           mkdir $HOME/.kube
+          echo "Making a copy of config into .kube"
           sudo microk8s config > $HOME/.kube/config
           export KUBECONFIG=$HOME/.kube/config
           echo $KUBECONFIG
