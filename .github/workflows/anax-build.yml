@@ -36,6 +36,7 @@ jobs:
           go get -u golang.org/x/lint/golint
           sudo npm install -g jshint
           # Docker already installed
+          sudo getent group | grep docker
           sudo usermod -aG docker $USER
           newgrp docker
           sudo chown -fR $USER ~/.docker
@@ -43,6 +44,9 @@ jobs:
           # Installing a single node k8s
           echo "Installing k8s"
           sudo snap install microk8s --classic --channel=1.18/stable
+          echo "Checking groups members"
+          sudo getent group | grep docker
+          sudo getent group | grep microk8s
           echo "Adding user to k8s group"
           sudo usermod -aG microk8s $USER
           echo "Creating .kube dir"
@@ -50,14 +54,13 @@ jobs:
           echo "Making a copy of config into .kube"
           sudo microk8s config > $HOME/.kube/config
           export KUBECONFIG=$HOME/.kube/config
-          echo $KUBECONFIG
-          ls -la $HOME/.kube/
           echo "Changing the ownership of .kube dir"
           sudo chown -fR $USER $HOME/.kube
           echo "Re-entering the session"
           sudo su - $USER
           echo "Using sudo -H -s -E"
           sudo -H -s -E
+          sudo getent group | grep microk8s
           echo "Checking the status of k8s"
           microk8s status --wait-ready
 
