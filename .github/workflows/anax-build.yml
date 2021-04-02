@@ -52,6 +52,11 @@ jobs:
           echo "Adding user to k8s group"
           sudo usermod -aG microk8s $USER
           sudo newgrp microk8s
+          echo "Grant access to runner group"
+          sudo chown root:runner /var/snap/microk8s/current/credentials/
+          sudo chown root:runner /var/snap/microk8s/current/credentials/client.config
+          sudo chown root:runner /var/snap/microk8s/current/args/
+          sudo chown root:runner /var/snap/microk8s/current/args/kubectl
           echo "Creating .kube dir"
           mkdir $HOME/.kube
           echo "Making a copy of config into .kube"
