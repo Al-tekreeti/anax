@@ -42,7 +42,9 @@ jobs:
           # Docker already installed
           sudo usermod -a -G docker $USER
           sudo newgrp docker
+          ls -la ~/.docker
           sudo chown -f -R $USER ~/.docker
+          ls -la ~/.docker
           docker version
           echo "docker group"
           cat /etc/group | grep docker
@@ -55,12 +57,15 @@ jobs:
           sudo usermod -a -G microk8s $USER
           echo "Creating .kube dir"
           mkdir -p $HOME/.kube
+          ls -la ~/.kube
           echo "Making a copy of config into .kube"
           sudo microk8s config > $HOME/.kube/config
           export KUBECONFIG=$HOME/.kube/config
           echo "Changing the ownership of .kube dir"
           sudo chown -f -R $USER $HOME/.kube
+          ls -la ~/.kube
           sudo chmod +x $HOME/.kube
+          ls -la ~/.kube
           echo "microk8s group"
           cat /etc/group | grep microk8s
           echo "Re-entering the session"
