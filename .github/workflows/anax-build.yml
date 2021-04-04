@@ -57,6 +57,7 @@ jobs:
           sudo su - $USER
           sudo chown -R $USER:$USER /var/snap/microk8s/current/credentials
           sudo chown -R $USER:$USER /var/snap/microk8s/current/credentials/client.config
+          ls -la /var/snap/microk8s/current/credentials
           echo "Checking the status of k8s"
           microk8s status --wait-ready
 
