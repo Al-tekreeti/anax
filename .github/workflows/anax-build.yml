@@ -32,9 +32,6 @@ jobs:
 
       - name: Install dependencies
         run: |
-          # group docker
-          echo "docker group"
-          cat /etc/group | grep docker
           # golang dependencies
           sudo apt-get update
           go get -u golang.org/x/lint/golint
@@ -44,36 +41,24 @@ jobs:
           sudo newgrp docker
           ls -la ~/.docker
           sudo chown -f -R $USER ~/.docker
-          ls -la ~/.docker
-          docker version
-          echo "docker group"
-          cat /etc/group | grep docker
+          sudo chown root:docker /var/run/docker.sock
           # Installing a single node k8s
           echo "Installing k8s"
           sudo snap install microk8s --classic --channel=1.18/stable
-          echo "microk8s group"
-          cat /etc/group | grep microk8s
           echo "Adding user to k8s group"
           sudo usermod -a -G microk8s $USER
           echo "Creating .kube dir"
           mkdir -p $HOME/.kube
-          ls -la ~/.kube
           echo "Making a copy of config into .kube"
           sudo microk8s config > $HOME/.kube/config
           export KUBECONFIG=$HOME/.kube/config
           echo "Changing the ownership of .kube dir"
           sudo chown -f -R $USER $HOME/.kube
-          ls -la ~/.kube
-          sudo chmod +x $HOME/.kube
-          ls -la ~/.kube
-          echo "microk8s group"
-          cat /etc/group | grep microk8s
+          sudo chmod go-rx $HOME/.kube/config
           echo "Re-entering the session"
           sudo su - $USER
-          echo "microk8s group"
-          cat /etc/group | grep microk8s
           echo "Checking the status of k8s"
-          microk8s status --wait-ready
+          sudo microk8s status --wait-ready
 
       # build anax binaries
       - name: Build anax binaries
@@ -81,6 +66,5 @@ jobs:
 
       # E2E development test
       - name: E2E dev-test
-        # run: echo $PWD && ls -la
         run: cd ${GOPATH}/src/github.com/Al-tekreeti/anax/test && make test TEST_VARS="NOLOOP=1 PATTERN=sloc"
  
