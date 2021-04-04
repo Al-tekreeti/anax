@@ -35,9 +35,6 @@ jobs:
           # group docker
           echo "docker group"
           cat /etc/group | grep docker
-          # group microk8s
-          echo "microk8s group"
-          cat /etc/group | grep microk8s
           # golang dependencies
           sudo apt-get update
           go get -u golang.org/x/lint/golint
@@ -50,8 +47,6 @@ jobs:
           echo "docker group"
           cat /etc/group | grep docker
           # Installing a single node k8s
-          echo "microk8s group"
-          cat /etc/group | grep microk8s
           echo "Installing k8s"
           sudo snap install microk8s --classic --channel=1.18/stable
           echo "microk8s group"
