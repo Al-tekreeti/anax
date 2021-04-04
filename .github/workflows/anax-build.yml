@@ -55,7 +55,7 @@ jobs:
           sudo chmod +x $HOME/.kube
           echo "Re-entering the session"
           sudo su - $USER
-          ls -la $HOME/.kube
+          sudo ls -la /var/snap/microk8s/current/credentials
           echo "Checking the status of k8s"
           microk8s status --wait-ready
 
