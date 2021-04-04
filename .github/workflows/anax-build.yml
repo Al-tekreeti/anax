@@ -33,6 +33,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo usermod -aG sudo $USER
+          sudo su - $USER
           sudo apt-get update
           go get -u golang.org/x/lint/golint
           sudo npm install -g jshint
