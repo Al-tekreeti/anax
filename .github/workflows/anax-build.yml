@@ -36,10 +36,10 @@ jobs:
           go get -u golang.org/x/lint/golint
           sudo npm install -g jshint
           # Docker already installed
-          # sudo usermod -a -G docker $USER
-          # newgrp docker
-          #sudo chown -f -R $USER ~/.docker
-          #docker version
+          sudo usermod -a -G docker $USER
+          newgrp docker
+          sudo chown -f -R $USER ~/.docker
+          docker version
           # Installing a single node k8s
           echo "Installing k8s"
           sudo snap install microk8s --classic --channel=1.18/stable
