@@ -48,7 +48,7 @@ jobs:
           echo "Creating .kube dir"
           mkdir -p $HOME/.kube
           echo "Making a copy of config into .kube"
-          sudo microk8s config view --raw > $HOME/.kube/config
+          sudo microk8s kubectl config view --raw > $HOME/.kube/config
           export KUBECONFIG=$HOME/.kube/config
           echo "Changing the ownership of .kube dir"
           sudo chown -f -R $USER $HOME/.kube
