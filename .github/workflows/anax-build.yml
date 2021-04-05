@@ -57,7 +57,7 @@ jobs:
           sudo chown -f -R $USER $HOME/.kube
           sudo chmod go-rx $HOME/.kube/config
           echo "Re-entering the session"
-          # sudo su - $USER
+          sudo su - $USER
           echo "Checking the status of k8s"
           microk8s status --wait-ready
 
