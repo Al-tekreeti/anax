@@ -33,7 +33,6 @@ jobs:
       - name: Install dependencies
         run: |
           sudo usermod -aG sudo $USER
-          groups $USER
           sudo su - $USER
           # golang dependencies
           sudo apt-get update
@@ -41,9 +40,9 @@ jobs:
           sudo npm install -g jshint
           # Docker already installed
           sudo usermod -a -G docker $USER
-          sudo newgrp docker
+          #sudo newgrp docker
           sudo chown -f -R $USER ~/.docker
-          # docker run hello-world
+          docker run hello-world
           # Installing a single node k8s
           echo "Installing k8s"
           sudo snap install microk8s --classic --channel=1.18/stable
@@ -58,7 +57,7 @@ jobs:
           sudo chown -f -R $USER $HOME/.kube
           sudo chmod go-rx $HOME/.kube/config
           echo "Re-entering the session"
-          sudo su - $USER
+          # sudo su - $USER
           echo "Checking the status of k8s"
           microk8s status --wait-ready
 
