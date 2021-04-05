@@ -75,5 +75,5 @@ jobs:
       - name: E2E dev-test
         run: |
           cd ${GOPATH}/src/github.com/Al-tekreeti/anax/test && make
-          echo $PWD
+          make test TEST_VARS="NOLOOP=1 PATTERN=sloc"
  
