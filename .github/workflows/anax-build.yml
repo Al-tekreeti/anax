@@ -59,6 +59,7 @@ jobs:
           echo "Re-entering the session"
           sudo su - $USER
           echo "Checking the status of k8s"
+          alias microk8s="sudo microk8s"
           microk8s status --wait-ready
 
       # build anax binaries
