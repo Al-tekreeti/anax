@@ -73,5 +73,7 @@ jobs:
 
       # E2E development test
       - name: E2E dev-test
-        run: cd ${GOPATH}/src/github.com/Al-tekreeti/anax/test && make
+        run: |
+          cd ${GOPATH}/src/github.com/Al-tekreeti/anax/test && make
+          echo $PWD
  
