@@ -40,7 +40,7 @@ jobs:
           sudo npm install -g jshint
           # Docker already installed
           sudo usermod -a -G docker $USER
-          #sudo newgrp docker
+          sudo newgrp docker
           sudo chown -f -R $USER ~/.docker
           #docker run hello-world
           # Installing a single node k8s
@@ -61,7 +61,7 @@ jobs:
           sudo chmod 777 /var/snap/microk8s/current/args/
           sudo chmod 666 /var/snap/microk8s/current/args/kubectl
           echo "Re-entering the session"
-          sudo su - $USER
+          sudo su  $USER
           echo "Checking the status of k8s"
           #alias microk8s="sudo microk8s"
           sudo microk8s status --wait-ready
