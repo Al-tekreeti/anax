@@ -39,10 +39,8 @@ jobs:
           # Docker already installed
           sudo usermod -a -G docker $USER
           sudo newgrp docker
-          ls -la ~/.docker
           sudo chown -f -R $USER ~/.docker
-          sudo chown root:docker /var/run/docker.sock
-          docker run hello-world
+          # docker run hello-world
           # Installing a single node k8s
           echo "Installing k8s"
           sudo snap install microk8s --classic --channel=1.18/stable
@@ -59,6 +57,8 @@ jobs:
           echo "Re-entering the session"
           sudo su - $USER
           echo "Checking the status of k8s"
+          microk8s stop
+          microk8s start
           sudo microk8s status --wait-ready
 
       # build anax binaries
