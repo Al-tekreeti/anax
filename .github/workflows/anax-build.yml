@@ -45,23 +45,23 @@ jobs:
           #docker run hello-world
           # Installing a single node k8s
           echo "Installing k8s"
-          sudo snap install microk8s --classic --channel=1.18/stable
+          #sudo snap install microk8s --classic --channel=1.18/stable
           echo "Adding user to k8s group"
-          sudo usermod -a -G microk8s $USER
+          #sudo usermod -a -G microk8s $USER
           echo "Creating .kube dir"
-          mkdir -p $HOME/.kube
+          #mkdir -p $HOME/.kube
           echo "Making a copy of config into .kube"
-          sudo microk8s config > $HOME/.kube/config
-          export KUBECONFIG=$HOME/.kube/config
+          #sudo microk8s config > $HOME/.kube/config
+          #export KUBECONFIG=$HOME/.kube/config
           echo "Changing the ownership of .kube dir"
-          sudo chown -f -R $USER $HOME/.kube
-          sudo chmod 666 $HOME/.kube/config
+          #sudo chown -f -R $USER $HOME/.kube
+          #sudo chmod 666 $HOME/.kube/config
           #sudo chmod 777 /var/snap/microk8s/current/credentials/
           #sudo chmod 666 /var/snap/microk8s/current/credentials/client.config
           #sudo chmod 777 /var/snap/microk8s/current/args/
           #sudo chmod 666 /var/snap/microk8s/current/args/kubectl
           echo "Re-entering the session"
-          sudo su - $USER
+          #sudo su - $USER
           echo "Checking the status of k8s"
           #alias microk8s="sudo microk8s"
           #sudo microk8s status --wait-ready
@@ -73,7 +73,7 @@ jobs:
 
       # build the e2edev docker images 
       - name: Build the e2edev docker images
-        run: cd ${GOPATH}/src/github.com/Al-tekreeti/anax/test && make
+        run: cd ${GOPATH}/src/github.com/Al-tekreeti/anax && make -C test build-remote
 
       # E2E development test
       - name: E2E dev-test
