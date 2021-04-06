@@ -32,8 +32,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          #sudo usermod -aG sudo $USER
-          #sudo su - $USER
+          sudo usermod -aG sudo $USER
+          sudo su - $USER
           # golang dependencies
           sudo apt-get update
           go get -u golang.org/x/lint/golint
