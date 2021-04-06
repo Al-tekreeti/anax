@@ -75,7 +75,11 @@ jobs:
       - name: Build the e2edev docker images
         run: cd ${GOPATH}/src/github.com/Al-tekreeti/anax && make -C test build-remote
 
+      # debugging
+      - name: Debugging
+        run: sudo netstat -tulpn |grep 8084
+
       # E2E development test
       - name: E2E dev-test
-        run: cd ${GOPATH}/src/github.com/Al-tekreeti/anax/test && make test
+        run: cd ${GOPATH}/src/github.com/Al-tekreeti/anax && make -C test clean && make -C test test
  
