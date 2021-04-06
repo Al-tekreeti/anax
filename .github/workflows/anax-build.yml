@@ -56,16 +56,10 @@ jobs:
           echo "Changing the ownership of .kube dir"
           #sudo chown -f -R $USER $HOME/.kube
           #sudo chmod 666 $HOME/.kube/config
-          #sudo chmod 777 /var/snap/microk8s/current/credentials/
-          #sudo chmod 666 /var/snap/microk8s/current/credentials/client.config
-          #sudo chmod 777 /var/snap/microk8s/current/args/
-          #sudo chmod 666 /var/snap/microk8s/current/args/kubectl
           echo "Re-entering the session"
           #sudo su - $USER
           echo "Checking the status of k8s"
-          #alias microk8s="sudo microk8s"
           #sudo microk8s status --wait-ready
-          #sudo microk8s inspect
 
       # build anax binaries
       - name: Build anax binaries
@@ -74,10 +68,6 @@ jobs:
       # build the e2edev docker images 
       - name: Build the e2edev docker images
         run: cd ${GOPATH}/src/github.com/Al-tekreeti/anax && make -C test build-remote
-
-      # debugging
-      #- name: Disable and stop mono-xsp4.service
-      # run: sudo netstat -tulpn | grep 8084
 
       # E2E development test
       - name: E2E dev-test
