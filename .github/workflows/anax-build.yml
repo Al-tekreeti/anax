@@ -13,7 +13,7 @@ jobs:
   # This workflow contains a single job called "build"
   build:
     # The type of runner that the job will run on
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-18.04
     env:
       GOPATH: /home/runner/work/anax/anax/go
     # Steps represent a sequence of tasks that will be executed as part of the job
@@ -77,9 +77,7 @@ jobs:
 
       # debugging
       - name: Disable and stop mono-xsp4.service
-        run: |
-             /lib/systemd/systemd-sysv-install sudo disable mono-xsp4
-             sudo netstat -tulpn |grep 8084
+        run: sudo netstat -tulpn |grep 8084
 
       # E2E development test
       - name: E2E dev-test
