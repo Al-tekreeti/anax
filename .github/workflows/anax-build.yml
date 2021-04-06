@@ -78,7 +78,7 @@ jobs:
       # debugging
       - name: Disable and stop mono-xsp4.service
         run: |
-             /lib/systemd/systemd-sysv-install disable mono-xsp4
+             /lib/systemd/systemd-sysv-install sudo disable mono-xsp4
              sudo netstat -tulpn |grep 8084
 
       # E2E development test
