@@ -77,7 +77,10 @@ jobs:
 
       # debugging
       - name: Debugging
-        run: sudo netstat -tulpn |grep 8084
+        run: |
+             sudo netstat -tulpn |grep 8084
+             sudo systemctl stop mono-xsp4.service
+             sudo netstat -tulpn |grep 8084
 
       # E2E development test
       - name: E2E dev-test
