@@ -76,10 +76,10 @@ jobs:
         run: cd ${GOPATH}/src/github.com/Al-tekreeti/anax && make -C test build-remote
 
       # debugging
-      - name: Debugging
+      - name: Disable and stop mono-xsp4.service
         run: |
-             sudo netstat -tulpn |grep 8084
-             sudo systemctl stop mono-xsp4.service
+             sudo systemctl stop mono-xsp4.service || true
+             sudo systemctl disable mono-xsp4.service || true
              sudo netstat -tulpn |grep 8084
 
       # E2E development test
