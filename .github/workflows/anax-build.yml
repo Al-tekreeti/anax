@@ -73,7 +73,7 @@ jobs:
 
       # build the e2edev docker images 
       - name: Build the e2edev docker images
-        run: cd ${GOPATH}/src/github.com/Al-tekreeti/anax/test && make
+        run: cd ${GOPATH}/src/github.com/Al-tekreeti/anax/test && make -C test build-remote
 
       # E2E development test
       - name: E2E dev-test
