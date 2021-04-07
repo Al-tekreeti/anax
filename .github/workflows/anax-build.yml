@@ -32,8 +32,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          #sudo usermod -aG sudo $USER
-          #sudo su - $USER
+          sudo usermod -aG sudo $USER
+          sudo su - $USER
           # golang dependencies
           sudo apt-get update
           go get -u golang.org/x/lint/golint
@@ -71,5 +71,5 @@ jobs:
 
       # E2E development test
       - name: E2E dev-test
-        run: cd ${GOPATH}/src/github.com/Al-tekreeti/anax && make -C test clean && make -C test test TEST_VARS="NOLOOP=1"
+        run: cd ${GOPATH}/src/github.com/Al-tekreeti/anax && make -C test clean && make -C test test TEST_VARS="NOLOOP=1 PATTERN=sloc"
  
