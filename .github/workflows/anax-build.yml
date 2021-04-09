@@ -71,5 +71,5 @@ jobs:
 
       # E2E development test
       - name: E2E dev-test
-        run: cd ${GOPATH}/src/github.com/Al-tekreeti/anax && make -C test clean && make -C test test TEST_VARS="NOLOOP=1 TEST_PATTERNS=sloc"
+        run: cd ${GOPATH}/src/github.com/Al-tekreeti/anax && make -C test clean && make -C test test TEST_VARS="NOLOOP=1 TEST_PATTERNS=sall"
  
