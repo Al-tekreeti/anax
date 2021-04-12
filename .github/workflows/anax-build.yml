@@ -43,23 +43,6 @@ jobs:
           sudo newgrp docker
           sudo chown -f -R $USER ~/.docker
           #docker run hello-world
-          # Installing a single node k8s
-          echo "Installing k8s"
-          #sudo snap install microk8s --classic --channel=1.18/stable
-          echo "Adding user to k8s group"
-          #sudo usermod -a -G microk8s $USER
-          echo "Creating .kube dir"
-          #mkdir -p $HOME/.kube
-          echo "Making a copy of config into .kube"
-          #sudo microk8s config > $HOME/.kube/config
-          #export KUBECONFIG=$HOME/.kube/config
-          echo "Changing the ownership of .kube dir"
-          #sudo chown -f -R $USER $HOME/.kube
-          #sudo chmod 666 $HOME/.kube/config
-          echo "Re-entering the session"
-          #sudo su - $USER
-          echo "Checking the status of k8s"
-          #sudo microk8s status --wait-ready
 
       # build anax binaries
       - name: Build anax binaries
@@ -71,5 +54,5 @@ jobs:
 
       # E2E development test
       - name: E2E dev-test
-        run: cd ${GOPATH}/src/github.com/Al-tekreeti/anax && make -C test clean && make -C test test TEST_VARS="NOLOOP=1 TEST_PATTERNS=sall"
+        run: cd ${GOPATH}/src/github.com/Al-tekreeti/anax && make -C test clean && make -C test test TEST_VARS="NOLOOP=1 TEST_PATTERNS=sloc"
  
