@@ -60,7 +60,7 @@ jobs:
           cd ${GOPATH}/src/github.com/Al-tekreeti/anax
           make fss-package
           make anax-package 
-          if ${ARCHITECTURE == 'amd64'}; then
+          if [ $ARCHITECTURE = 'amd64' ]; then
                make agbot-package
           fi
           make anax-k8s-package
