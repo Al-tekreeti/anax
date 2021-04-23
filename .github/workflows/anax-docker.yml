@@ -23,7 +23,7 @@ jobs:
     env:
       GOPATH: /home/runner/work/anax/anax/go
       arch: ${{ matrix.type }}
-      ARCHITECTURE: ${{env.arch}}
+      #ARCHITECTURE: ${{env.arch}}
       IMAGE_REPO: maltekreeti
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -64,7 +64,7 @@ jobs:
           cd ${GOPATH}/src/github.com/Al-tekreeti/anax
           make fss-package
           make anax-package 
-          if [ $ARCHITECTURE = 'amd64' ]; then
+          if [ $arch = 'amd64' ]; then
                make agbot-package
           fi
           make anax-k8s-package
