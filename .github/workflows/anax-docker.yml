@@ -22,8 +22,8 @@ jobs:
         type: [amd64,arm64,armhf]
     env:
       GOPATH: /home/runner/work/anax/anax/go
-      arch: $${{ matrix.type }}
-      ARCHITECTURE: $${{env.arch}}
+      arch: ${{ matrix.type }}
+      ARCHITECTURE: ${{env.arch}}
       IMAGE_REPO: maltekreeti
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -56,14 +56,11 @@ jobs:
 
       # build anax binaries
       - name: Build anax binaries
-        run: |
-          export arch=$arch
-          cd ${GOPATH}/src/github.com/Al-tekreeti/anax && make
+        run: cd ${GOPATH}/src/github.com/Al-tekreeti/anax && make
 
       # build anax docker images 
       - name: Build and publish docker images
         run: |
-          export arch=$arch
           cd ${GOPATH}/src/github.com/Al-tekreeti/anax
           make fss-package
           make anax-package 
