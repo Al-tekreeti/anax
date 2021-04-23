@@ -62,6 +62,7 @@ jobs:
       # build anax docker images 
       - name: Build and publish docker images
         run: |
+          echo $arch
           cd ${GOPATH}/src/github.com/Al-tekreeti/anax
           make fss-package
           make anax-package 
