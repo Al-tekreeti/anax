@@ -19,11 +19,11 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success'}}
     strategy:
       matrix:
-        type: ["amd64","arm64","armhf"]
+        type: [amd64,arm64,armhf]
     env:
       GOPATH: /home/runner/work/anax/anax/go
-      arch: $${{ matrix.type }}
-      #ARCHITECTURE: 'amd64'
+      #arch: $${{ matrix.type }}
+      ARCHITECTURE: '${{matrix.type}}'
       IMAGE_REPO: maltekreeti
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -56,7 +56,9 @@ jobs:
 
       # build anax binaries
       - name: Build anax binaries
-        run: cd ${GOPATH}/src/github.com/Al-tekreeti/anax && make
+        run: |
+          export arch=${{matrix.type}}
+          cd ${GOPATH}/src/github.com/Al-tekreeti/anax && make
 
       # build anax docker images 
       - name: Build and publish docker images
@@ -64,7 +66,7 @@ jobs:
           cd ${GOPATH}/src/github.com/Al-tekreeti/anax
           make fss-package
           make anax-package 
-          if [ $arch = "amd64" ]; then
+          if [ $ARCHITECTURE = 'amd64' ]; then
                make agbot-package
           fi
           make anax-k8s-package
