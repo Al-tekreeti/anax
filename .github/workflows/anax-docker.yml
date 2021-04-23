@@ -19,7 +19,7 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success'}}
     strategy:
       matrix:
-        type: ['amd64','arm64','armhf']
+        type: [amd64,arm64,armhf]
     env:
       GOPATH: /home/runner/work/anax/anax/go
       arch: $${{ matrix.type }}
@@ -64,7 +64,7 @@ jobs:
           cd ${GOPATH}/src/github.com/Al-tekreeti/anax
           make fss-package
           make anax-package 
-          if [ $arch = 'amd64' ]; then
+          if [ $arch = amd64 ]; then
                make agbot-package
           fi
           make anax-k8s-package
