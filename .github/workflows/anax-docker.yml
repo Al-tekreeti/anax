@@ -63,6 +63,7 @@ jobs:
       # build anax docker images 
       - name: Build and publish docker images
         run: |
+          export arch=${{matrix.type}}
           cd ${GOPATH}/src/github.com/Al-tekreeti/anax
           make fss-package
           make anax-package 
