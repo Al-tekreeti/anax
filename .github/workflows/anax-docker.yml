@@ -19,7 +19,7 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success'}}
     strategy:
       matrix:
-        type:['amd64','arm64','armhf']
+        type: ['amd64','arm64','armhf']
     env:
       GOPATH: /home/runner/work/anax/anax/go
       arch: $${{ matrix.type }}
