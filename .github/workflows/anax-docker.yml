@@ -20,11 +20,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        type: [amd64,arm64,armhf]
+        type: [amd64]
     env:
       GOPATH: /home/runner/work/anax/anax/go
       arch: ${{ matrix.type }}
-      #ARCHITECTURE: ${{env.arch}}
       IMAGE_REPO: maltekreeti
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -46,14 +45,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Install dependencies
-        run: |
-          # Docker already installed
-          #sudo usermod -a -G docker $USER
-          #sudo newgrp docker
-          #sudo chown -f -R $USER ~/.docker
-          #docker run hello-world
 
       # build anax binaries
       - name: Build anax binaries
