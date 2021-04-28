@@ -90,6 +90,6 @@ jobs:
           go version
           echo $arch
           export BUILD_NUMBER=${env.BUILD_NUMBER}
-	  export VERSION=\$(echo $ANAX_IMAGE_VERSION | cut -d '-' -f 1)								
+          #export VERSION=\$(echo $ANAX_IMAGE_VERSION | cut -d '-' -f 1)								
           cd ${GOPATH}/src/github.com/Al-tekreeti/anax && make macpkg
 
