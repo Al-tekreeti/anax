@@ -15,7 +15,7 @@ jobs:
     # The type of runner that the job will run on
     runs-on: macos-latest
     env:
-      GOPATH: /home/runner/work/anax/anax/go
+      GOPATH: /Users/runner/work/anax/anax/go
       arch: amd64
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -36,5 +36,7 @@ jobs:
           echo $arch
           go version
           echo $PWD
+          echo $HOME
+          ls $GOPATH
           
  
