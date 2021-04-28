@@ -7,7 +7,7 @@ name: anax-build-docker
 on:
   workflow_run:
     workflows: ["anax-build"]
-    branches: [anax-build-docker]
+    branches: [anax-build]
     types: [completed]
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
