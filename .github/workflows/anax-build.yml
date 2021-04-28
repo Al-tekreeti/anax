@@ -33,6 +33,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd ${GOPATH}/src/github.com/Al-tekreeti/anax && make macpkg
+          echo $PATH
+          #cd ${GOPATH}/src/github.com/Al-tekreeti/anax && make macpkg
           
  
