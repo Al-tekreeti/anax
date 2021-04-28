@@ -34,9 +34,10 @@ jobs:
       - name: Install dependencies
         run: |
           #echo $PATH
-          #export PATH=$PATH:/usr/local/go/bin
-          #cd ${GOPATH}/src/github.com/Al-tekreeti/anax && make macpkg
-          go env
+          export PATH=$PATH:/usr/local/go/bin
+          go get github.com/tools/godep
+          cd ${GOPATH}/src/github.com/Al-tekreeti/anax && make macpkg
+          #go env
 
           
  
