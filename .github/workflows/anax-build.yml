@@ -33,10 +33,6 @@ jobs:
 
       - name: Install dependencies
         run: |
-          echo $arch
-          go version
-          echo $PWD
-          echo $HOME
-          ls $GOPATH
+          cd ${GOPATH}/src/github.com/Al-tekreeti/anax && make macpkg
           
  
