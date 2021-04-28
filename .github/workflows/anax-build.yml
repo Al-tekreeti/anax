@@ -6,7 +6,7 @@ name: anax-build
 # events but only for the anax-build branch
 on:
   push:
-    branches: [anax-build]
+    branches: [anax-build-docker]
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -32,16 +32,16 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo usermod -aG sudo $USER
-          sudo su - $USER
+          #sudo usermod -aG sudo $USER
+          #sudo su - $USER
           # golang dependencies
-          sudo apt-get update
-          go get -u golang.org/x/lint/golint
-          sudo npm install -g jshint
+          #sudo apt-get update
+          #go get -u golang.org/x/lint/golint
+          #sudo npm install -g jshint
           # Docker already installed
-          sudo usermod -a -G docker $USER
-          sudo newgrp docker
-          sudo chown -f -R $USER ~/.docker
+          #sudo usermod -a -G docker $USER
+          #sudo newgrp docker
+          #sudo chown -f -R $USER ~/.docker
           #docker run hello-world
 
       # build anax binaries

@@ -1,0 +1,75 @@
+# This pipeline is to build anax binaries, their docker images, and push them to docker hub
+
+name: anax-build-docker
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the anax-build branch
+on:
+  workflow_run:
+    workflows: ["anax-build"]
+    branches: [anax-build-docker]
+    types: [completed]
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  on-success:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-18.04
+    if: ${{ github.event.workflow_run.conclusion == 'success'}}
+    strategy:
+      fail-fast: false
+      matrix:
+        type: [amd64]
+    env:
+      GOPATH: /home/runner/work/anax/anax/go
+      arch: ${{ matrix.type }}
+      IMAGE_REPO: maltekreeti
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+        with:
+           path: go/src/github.com/Al-tekreeti/anax
+      
+      # prepare the environment
+      - name: Set up golang 1.14.1
+        uses: actions/setup-go@v2
+        with:
+           go-version: '1.14.1'
+
+      # login to dockerhub
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # build anax binaries
+      - name: Build anax binaries
+        run: cd ${GOPATH}/src/github.com/Al-tekreeti/anax && make
+
+      # build anax docker images 
+      - name: Build and publish docker images
+        run: |
+          echo $arch
+          cd ${GOPATH}/src/github.com/Al-tekreeti/anax
+          make fss-package
+          make anax-package 
+          if [ $arch = 'amd64' ]; then
+               make agbot-package
+          fi
+          make anax-k8s-package
+  
+  on-failure:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-18.04
+    if: ${{ github.event.workflow_run.conclusion == 'failure'}}
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Print a failure message
+        run: echo "The PR was failed"
+
