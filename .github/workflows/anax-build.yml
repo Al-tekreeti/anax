@@ -34,9 +34,8 @@ jobs:
       - name: Install dependencies
         run: |
           #echo $PATH
-          softwareupdate -i -a --restart
           export PATH=$PATH:/usr/local/go/bin
-          go get github.com/tools/godep
+          sudo go get github.com/tools/godep
           cd ${GOPATH}/src/github.com/Al-tekreeti/anax && make macpkg
           #go env
 
