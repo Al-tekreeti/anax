@@ -31,13 +31,19 @@ jobs:
         with:
            go-version: '1.14.1'
 
-      - name: Install dependencies
+      - name: Test0
         run: |
           #echo $PATH
-          export PATH=$PATH:/usr/local/go/bin
-          sudo go get github.com/tools/godep
-          cd ${GOPATH}/src/github.com/Al-tekreeti/anax && make macpkg
-          #go env
+          #export PATH=$PATH:/usr/local/go/bin
+          #sudo go get github.com/tools/godep
+          #cd ${GOPATH}/src/github.com/Al-tekreeti/anax && make macpkg
+          ls -la
+      - name: Test1
+        run: echo $GOPATH
+      - name: Test2
+        run: echo $PWD
+      - name: Test3
+        run: ls $GOPATH
 
           
  
