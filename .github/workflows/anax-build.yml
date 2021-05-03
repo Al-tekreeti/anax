@@ -34,14 +34,9 @@ jobs:
       - name: Test0
         shell: bash
         run: |
-          #echo $PATH
-          #export PATH=$PATH:/usr/local/go/bin
-          #export PATH=$PATH:$GOPATH/bin
           cd ${GOPATH}/src/github.com/Al-tekreeti/anax
           go get github.com/tools/godep
-          #cd ${GOPATH}/src/github.com/Al-tekreeti/anax && make macpkg
           make macpkg
-          #ls -la
 
           
  
