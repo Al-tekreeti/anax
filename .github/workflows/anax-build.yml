@@ -36,7 +36,7 @@ jobs:
           #echo $PATH
           #export PATH=$PATH:/usr/local/go/bin
           #export PATH=$PATH:$GOPATH/bin
-          #sudo go get github.com/tools/godep
+          go get github.com/tools/godep
           #cd ${GOPATH}/src/github.com/Al-tekreeti/anax && make macpkg
           make macpkg
           #ls -la
