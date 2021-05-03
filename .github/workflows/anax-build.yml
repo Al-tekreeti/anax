@@ -15,15 +15,15 @@ jobs:
     # The type of runner that the job will run on
     runs-on: macos-latest
     env:
-      GOPATH: /Users/runner/work/anax/anax/go
+      #GOPATH: /Users/runner/work/anax/anax/go
       arch: amd64
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
-        with:
-           path: go/src/github.com/Al-tekreeti/anax
+        #with:
+           #path: go/src/github.com/Al-tekreeti/anax
       
       # prepare the environment
       - name: Set up golang 1.14.1
@@ -34,10 +34,11 @@ jobs:
       - name: Test0
         run: |
           #echo $PATH
-          export PATH=$PATH:/usr/local/go/bin
-          export PATH=$PATH:$GOPATH/bin
+          #export PATH=$PATH:/usr/local/go/bin
+          #export PATH=$PATH:$GOPATH/bin
           #sudo go get github.com/tools/godep
-          cd ${GOPATH}/src/github.com/Al-tekreeti/anax && make macpkg
+          #cd ${GOPATH}/src/github.com/Al-tekreeti/anax && make macpkg
+          make macpkg
           #ls -la
 
           
