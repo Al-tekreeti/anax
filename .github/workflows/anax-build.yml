@@ -38,8 +38,8 @@ jobs:
           #export PATH=$PATH:$GOPATH/bin
           go get github.com/tools/godep
           #cd ${GOPATH}/src/github.com/Al-tekreeti/anax && make macpkg
-          make macpkg
-          #ls -la
+          #make macpkg
+          ls -la
 
           
  
