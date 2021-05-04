@@ -38,6 +38,7 @@ jobs:
           export HORIZON_CLI_PRIV_KEY_PW=${{secrets.PASSPHRASE}}
           cd ${GOPATH}/src/github.com/Al-tekreeti/anax
           go get github.com/tools/godep
+          mkdir pkg/mac/build
           make gen-mac-key
           make install-mac-key
           make macpkg
