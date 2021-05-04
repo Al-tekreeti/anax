@@ -17,6 +17,7 @@ jobs:
     env:
       GOPATH: /Users/runner/work/anax/anax/go
       arch: amd64
+      HORIZON_CLI_PTIV_KEY_PW: {{secrets.PASSPHRASE}}
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
 
@@ -36,6 +37,8 @@ jobs:
         run: |
           cd ${GOPATH}/src/github.com/Al-tekreeti/anax
           go get github.com/tools/godep
+          make gen-mac-key
+          make install-mac-key
           make macpkg
 
           
