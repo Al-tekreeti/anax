@@ -41,7 +41,7 @@ jobs:
           mkdir pkg/mac/build
           make gen-mac-key
           make install-mac-key
-          make macpkg
+          #make macpkg
 
           
  
