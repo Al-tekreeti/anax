@@ -42,7 +42,7 @@ jobs:
           #make gen-mac-key
           #make install-mac-key
           #make macpkg
-          ls -la go/src/github.com/$GITHUB_REPOSITORY
+          cd go/src/github.com/$GITHUB_REPOSITORY && ls -la
 
           
  
