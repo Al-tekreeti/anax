@@ -43,6 +43,8 @@ jobs:
           #make gen-mac-key
           #make install-mac-key
           ls -la build/
+          openssl genrsa -out build/horizon-cli.key 2048
+          ls -la build/
           #sudo security add-trusted-cert -d -r trustAsRoot -p pkgSign -k /Library/Keychains/System.keychain build/horizon-cli.crt
           #make macpkg
           #cd go/src/github.com/$GITHUB_REPOSITORY && ls -la
