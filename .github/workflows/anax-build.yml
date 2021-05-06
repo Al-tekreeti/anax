@@ -35,14 +35,15 @@ jobs:
       - name: Test0
         shell: bash
         run: |
-          #export HORIZON_CLI_PRIV_KEY_PW=${{secrets.PASSPHRASE}}
-          #cd ${GOPATH}/src/github.com/Al-tekreeti/anax
-          #go get github.com/tools/godep
-          #mkdir pkg/mac/build
-          #make gen-mac-key
-          #make install-mac-key
+          export HORIZON_CLI_PRIV_KEY_PW=${{secrets.PASSPHRASE}}
+          cd ${GOPATH}/src/github.com/Al-tekreeti/anax
+          go get github.com/tools/godep
+          mkdir pkg/mac/build
+          make gen-mac-key
+          make install-mac-key
+          sudo security add-trusted-cert -d -r trustAsRoot -p pkgSign -k /Library/Keychains/System.keychain build/horizon-cli.p12
           #make macpkg
-          cd go/src/github.com/$GITHUB_REPOSITORY && ls -la
+          #cd go/src/github.com/$GITHUB_REPOSITORY && ls -la
 
           
  
