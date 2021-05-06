@@ -40,18 +40,13 @@ jobs:
           go get github.com/tools/godep
           mkdir pkg/mac/build
           cd pkg/mac/
-          ls -la build/
-          openssl genrsa -out build/horizon-cli.key 2048
-          ls -la build/
-	  openssl req -x509 -days 3650 -new -config key-gen/horizon-cli-key.conf -nodes -key build/horizon-cli.key -extensions extensions -sha256 -out build/horizon-cli.crt
-          ls -la build/
-	  openssl pkcs12 -export -inkey build/horizon-cli.key -in build/horizon-cli.crt -out build/horizon-cli.p12 -password env:HORIZON_CLI_PRIV_KEY_PW
-          ls -la build/
+          openssl genrsa -out build/horizon-cli.key 2048  # create private key
+	  openssl req -x509 -days 3650 -new -config key-gen/horizon-cli-key.conf -nodes -key build/horizon-cli.key -extensions extensions -sha256 -out build/horizon-cli.crt  # create self-signed cert
+	  openssl pkcs12 -export -inkey build/horizon-cli.key -in build/horizon-cli.crt -out build/horizon-cli.p12 -password env:HORIZON_CLI_PRIV_KEY_PW  # wrap the key and certificate into PKCS#12 archive
 	  rm -f build/horizon-cli.key  # clean up intermediate files
-	  ls -la build/
           #make gen-mac-key
           #make install-mac-key
-          #ls -la build/
+          ls -la build/
           #sudo security add-trusted-cert -d -r trustAsRoot -p pkgSign -k /Library/Keychains/System.keychain build/horizon-cli.p12
           #make macpkg
           #cd go/src/github.com/$GITHUB_REPOSITORY && ls -la
