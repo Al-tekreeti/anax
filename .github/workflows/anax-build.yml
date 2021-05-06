@@ -42,8 +42,8 @@ jobs:
           make gen-mac-key
           make install-mac-key
           #ls -la pkg/mac/build/
-          sudo security add-trusted-cert -d -r trustRoot -p pkgSign -k /Library/Keychains/System.keychain pkg/mac/build/horizon-cli.crt
-          make macpkg
+          sudo security add-trusted-cert -d -r trustRoot -p pkgSign -k /Library/Keychains/System.keychain pkg/mac/build/horizon-cli.p12
+          #make macpkg
           #cd go/src/github.com/$GITHUB_REPOSITORY && ls -la
 
           
