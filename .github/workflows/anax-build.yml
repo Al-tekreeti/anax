@@ -41,7 +41,7 @@ jobs:
           mkdir pkg/mac/build
           make gen-mac-key
           make install-mac-key
-          sudo security add-trusted-cert -d -r trustAsRoot -p pkgSign -k /Library/Keychains/System.keychain build/horizon-cli.crt
+          sudo security add-trusted-cert -d -r trustAsRoot -p pkgSign -k /Library/Keychains/System.keychain pkg/mac/build/horizon-cli.p12
           #make macpkg
           #cd go/src/github.com/$GITHUB_REPOSITORY && ls -la
 
