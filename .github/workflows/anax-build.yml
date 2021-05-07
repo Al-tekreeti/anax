@@ -47,9 +47,10 @@ jobs:
           ls -la build/
           openssl req -x509 -days 3650 -new -config key-gen/horizon-cli-key.conf -nodes -key build/horizon-cli.key -extensions extensions -sha256 -out build/horizon-cli.crt
           ls -la build/
-          openssl pkcs12 -export -inkey build/horizon-cli.key -in build/horizon-cli.crt -out build/horizon-cli.der -password env:HORIZON_CLI_PRIV_KEY_PW
+          openssl pkcs12 -export -inkey build/horizon-cli.key -in build/horizon-cli.crt -out build/horizon-cli.p12 -password env:HORIZON_CLI_PRIV_KEY_PW
           ls -la build/
-          sudo security add-trusted-cert -d -r trustAsRoot -p pkgSign -k /Library/Keychains/System.keychain build/horizon-cli.der
+          sudo security import build/horizon-cli.p12 -k /Library/Keychains/System.keychain -P "$$HORIZON_CLI_PRIV_KEY_PW" -f pkcs12
+          sudo security add-trusted-cert -d -r trustAsRoot -p pkgSign -k /Library/Keychains/System.keychain build/horizon-cli.p12
           #make macpkg
           #cd go/src/github.com/$GITHUB_REPOSITORY && ls -la
 
