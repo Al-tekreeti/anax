@@ -51,6 +51,7 @@ jobs:
           ls -la build/
           sudo security import build/horizon-cli.p12 -k /Library/Keychains/System.keychain -P $HORIZON_CLI_PRIV_KEY_PW -f pkcs12
           sudo security add-trusted-cert -d -r trustRoot -p pkgSign -k /Library/Keychains/System.keychain build/horizon-cli.crt
+          cd ..\..\
           make macpkg
           #cd go/src/github.com/$GITHUB_REPOSITORY && ls -la
 
