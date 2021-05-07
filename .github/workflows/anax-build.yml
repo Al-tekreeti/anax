@@ -49,7 +49,7 @@ jobs:
           ls -la build/
           openssl pkcs12 -export -inkey build/horizon-cli.key -in build/horizon-cli.crt -out build/horizon-cli.der -password env:HORIZON_CLI_PRIV_KEY_PW
           ls -la build/
-          sudo security add-trusted-cert -d -r trustRoot -p pkgSign -k /Library/Keychains/System.keychain build/horizon-cli.der
+          sudo security add-trusted-cert -d -r trustAsRoot -p pkgSign -k /Library/Keychains/System.keychain build/horizon-cli.der
           #make macpkg
           #cd go/src/github.com/$GITHUB_REPOSITORY && ls -la
 
