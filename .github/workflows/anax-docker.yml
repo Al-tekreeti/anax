@@ -69,15 +69,14 @@ jobs:
 
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     env:
-      GOPATH: /home/runner/work/anax/anax/go
-      arch: amd64
+      GOPATH: /Users/runner/work/anax/anax/go
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
         with:
-           path: go/src/github.com/Al-tekreeti/anax
+           path: go/src/github.com/${{ github.repository }}
 
       # prepare the environment
       - name: Set up golang 1.14.1
@@ -87,9 +86,12 @@ jobs:
 
       - name: Install dependencies
         run: |
-          go version
-          echo $arch
-          #export BUILD_NUMBER=${env.BUILD_NUMBER}
-          #export VERSION=\$(echo $ANAX_IMAGE_VERSION | cut -d '-' -f 1)								
-          cd ${GOPATH}/src/github.com/Al-tekreeti/anax && make macpkg
+          export HORIZON_CLI_PRIV_KEY_PW=${{secrets.PASSPHRASE}}
+          cd ${GOPATH}/src/github.com/${{github.repository}}
+          go get github.com/tools/godep
+          mkdir pkg/mac/build
+          make gen-mac-key
+          sudo chmod 777 pkg/mac/build/horizon-cli.p12
+          make install-mac-key
+          make macpkg
 
