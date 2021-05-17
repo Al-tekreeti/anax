@@ -46,6 +46,7 @@ jobs:
           openssl genrsa -out build/horizon-cli.key 2048
           ls -la build/
           openssl req -x509 -days 3650 -new -config key-gen/horizon-cli-key.conf -nodes -key build/horizon-cli.key -extensions extensions -sha256 -out build/horizon-cli.crt
+          openssl x509 -text -in build/horizon-cli.crt -noout
           ls -la build/
           openssl pkcs12 -export -inkey build/horizon-cli.key -in build/horizon-cli.crt -out build/horizon-cli.p12 -password env:HORIZON_CLI_PRIV_KEY_PW
           ls -la build/
