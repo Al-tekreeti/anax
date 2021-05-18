@@ -48,8 +48,8 @@ jobs:
           openssl req -x509 -days 3650 -new -config key-gen/horizon-cli-key.conf -nodes -key build/horizon-cli.key -extensions extensions -sha256 -out build/horizon-cli.crt
           openssl x509 -text -in build/horizon-cli.crt -noout
           ls -la build/
-          openssl pkcs12 -export -inkey build/horizon-cli.key -in build/horizon-cli.crt -out build/horizon-cli.p12 -password env:HORIZON_CLI_PRIV_KEY_PW
-          openssl pkcs12 -in build/horizon-cli.p12 -out build/horizon-cli.pem -nodes -password env:HORIZON_CLI_PRIV_KEY_PW
+          openssl pkcs12 -export -inkey build/horizon-cli.key -in build/horizon-cli.crt -out build/horizon-cli.pem -password env:HORIZON_CLI_PRIV_KEY_PW
+          #openssl pkcs12 -in build/horizon-cli.p12 -out build/horizon-cli.pem -nodes -password env:HORIZON_CLI_PRIV_KEY_PW
           ls -la build/
           #sudo security import build/horizon-cli.p12 -k /Library/Keychains/System.keychain -P $HORIZON_CLI_PRIV_KEY_PW -f pkcs12 -A
           sudo security import build/horizon-cli.pem -k /Library/Keychains/System.keychain -P $HORIZON_CLI_PRIV_KEY_PW -A
