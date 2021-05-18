@@ -55,8 +55,8 @@ jobs:
           sudo security import build/horizon-cli.pem -k /Library/Keychains/System.keychain -P $HORIZON_CLI_PRIV_KEY_PW 
           #sudo chmod 777 build/horizon-cli.p12
           #sudo security add-trusted-cert -d -r trustRoot -p pkgSign -k /Library/Keychains/System.keychain build/horizon-cli.p12
-          sudo security add-trusted-cert -d -r trustRoot -p codeSign -k /Library/Keychains/System.keychain build/horizon-cli.pem
-          sudo security find-identity -p codesigning 
+          sudo security add-trusted-cert -d -r trustRoot -p pkgSign -k /Library/Keychains/System.keychain build/horizon-cli.pem
+          sudo security find-identity -p basic /Library/Keychains/System.keychain
           cd ../../
           ls -la
           make macpkg
