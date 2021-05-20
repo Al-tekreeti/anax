@@ -38,27 +38,30 @@ jobs:
           export HORIZON_CLI_PRIV_KEY_PW=${{secrets.PASSPHRASE}}
           cd ${GOPATH}/src/github.com/Al-tekreeti/anax
           go get github.com/tools/godep
-          mkdir -m 777 pkg/mac/build
+          mkdir pkg/mac/build
           cd pkg/mac/
           #make gen-mac-key
           #make install-mac-key
           ls -la build/
           openssl genrsa -out build/horizon-cli.key 2048
           ls -la build/
+          sudo security find-identity -p basic /Library/Keychains/System.keychain
           openssl req -x509 -days 3650 -new -config key-gen/horizon-cli-key.conf -nodes -key build/horizon-cli.key -extensions extensions -sha256 -out build/horizon-cli.crt
-          openssl x509 -text -in build/horizon-cli.crt -noout
+          sudo security find-identity -p basic /Library/Keychains/System.keychain
+          #openssl x509 -text -in build/horizon-cli.crt -noout
           ls -la build/
-          openssl pkcs12 -export -inkey build/horizon-cli.key -in build/horizon-cli.crt -out build/horizon-cli.pem -password env:HORIZON_CLI_PRIV_KEY_PW
+          openssl pkcs12 -export -inkey build/horizon-cli.key -in build/horizon-cli.crt -out build/horizon-cli.p12 -password env:HORIZON_CLI_PRIV_KEY_PW
+          sudo security find-identity -p basic /Library/Keychains/System.keychain
           #openssl pkcs12 -in build/horizon-cli.p12 -out build/horizon-cli.pem -nodes -password env:HORIZON_CLI_PRIV_KEY_PW
           ls -la build/
-          #sudo security import build/horizon-cli.p12 -k /Library/Keychains/System.keychain -P $HORIZON_CLI_PRIV_KEY_PW -f pkcs12 -A
-          sudo security import build/horizon-cli.pem -k /Library/Keychains/System.keychain -P $HORIZON_CLI_PRIV_KEY_PW -A
-          #sudo chmod 777 build/horizon-cli.p12
-          #sudo security add-trusted-cert -d -r trustRoot -p pkgSign -k /Library/Keychains/System.keychain build/horizon-cli.p12
-          sudo security add-trusted-cert -d -r trustRoot -p pkgSign -k /Library/Keychains/System.keychain build/horizon-cli.pem
+          sudo security import build/horizon-cli.p12 -k /Library/Keychains/System.keychain -P $HORIZON_CLI_PRIV_KEY_PW -f pkcs12 -A -t cert
+          sudo security find-identity -p basic /Library/Keychains/System.keychain
+          #sudo security import build/horizon-cli.pem -k /Library/Keychains/System.keychain -P $HORIZON_CLI_PRIV_KEY_PW -A
+          sudo security add-trusted-cert -d -r trustRoot -p pkgSign -k /Library/Keychains/System.keychain build/horizon-cli.p12
+          #sudo security add-trusted-cert -d -r trustRoot -p pkgSign -k /Library/Keychains/System.keychain build/horizon-cli.pem
           sudo security find-identity -p basic /Library/Keychains/System.keychain
           cd ../../
-          ls -la
+          #ls -la
           make macpkg
           #cd go/src/github.com/$GITHUB_REPOSITORY && ls -la
 
