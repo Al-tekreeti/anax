@@ -54,7 +54,7 @@ jobs:
           sudo security find-identity -p basic /Library/Keychains/System.keychain
           #openssl pkcs12 -in build/horizon-cli.p12 -out build/horizon-cli.pem -nodes -password env:HORIZON_CLI_PRIV_KEY_PW
           ls -la build/
-          sudo security import build/horizon-cli.p12 -k /Library/Keychains/System.keychain -P $HORIZON_CLI_PRIV_KEY_PW -f pkcs12 -A -t cert
+          sudo security import build/horizon-cli.p12 -k /Library/Keychains/System.keychain -P $HORIZON_CLI_PRIV_KEY_PW -f pkcs12 -A -t agg
           sudo security find-identity -p basic /Library/Keychains/System.keychain
           #sudo security import build/horizon-cli.pem -k /Library/Keychains/System.keychain -P $HORIZON_CLI_PRIV_KEY_PW -A
           sudo security add-trusted-cert -d -r trustRoot -p pkgSign -k /Library/Keychains/System.keychain build/horizon-cli.p12
