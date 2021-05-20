@@ -17,6 +17,8 @@ jobs:
     env:
       GOPATH: /Users/runner/work/anax/anax/go
       arch: amd64
+      BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+      KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
       #HORIZON_CLI_PTIV_KEY_PW: ${{secrets.PASSPHRASE}}
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
