@@ -88,6 +88,7 @@ jobs:
           
           make macpkg
           #cd go/src/github.com/$GITHUB_REPOSITORY && ls -la
+          ls -la pkg/mac/build
 
           
  
