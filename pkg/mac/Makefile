@@ -83,7 +83,8 @@ $(MAC_PKG): require-version
 	done
 	cp ../../$(CLI_COMPLETION_DIR)/hzn_bash_autocomplete.sh horizon-cli/share/horizon
 	cp ../../$(CLI_CONFIG_FILE) horizon-cli/etc/horizon
-	pkgbuild --sign "horizon-cli-installer" --root horizon-cli --scripts scripts --identifier $(MAC_PKG_IDENTIFIER) --version $(VERSION)$(BUILD_NUMBER) --install-location $(MAC_PKG_INSTALL_DIR) $@
+	#pkgbuild --sign "horizon-cli-installer" --root horizon-cli --scripts scripts --identifier $(MAC_PKG_IDENTIFIER) --version $(VERSION)$(BUILD_NUMBER) --install-location $(MAC_PKG_INSTALL_DIR) $@
+	pkgbuild --root horizon-cli --scripts scripts --identifier $(MAC_PKG_IDENTIFIER) --version $(VERSION)$(BUILD_NUMBER) --install-location $(MAC_PKG_INSTALL_DIR) $@
 
 # Convenience targets to install and view the built mac pkg locally
 macinstall: $(MAC_PKG)
