@@ -89,6 +89,8 @@ jobs:
           make macpkg
           #cd go/src/github.com/$GITHUB_REPOSITORY && ls -la
           ls -la pkg/mac/build
+          cd pkg/mac/
+          productsign --sign "horizon-cli-installer" --keychain $KEYCHAIN_PATH build/horizon-cli-2.28.0.pkg build/horizon-cli-2.28.0-signed.pkg
 
           
  
