@@ -43,7 +43,7 @@ jobs:
           mkdir pkg/mac/build
           cd pkg/mac/
           # create variables
-          CERTIFICATE_PATH=build/horizon-cli.p12
+          CERTIFICATE_PATH=$PWD/build/horizon-cli.p12
           KEYCHAIN_PATH=/Library/Keychains/app-signing.keychain-db
           # import certificate from secrets
           echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode --output $CERTIFICATE_PATH
@@ -90,8 +90,8 @@ jobs:
           make macpkg
           #cd go/src/github.com/$GITHUB_REPOSITORY && ls -la
           ls -la pkg/mac/build
-          cd pkg/mac/
-          productsign --sign "horizon-cli-installer" --keychain $KEYCHAIN_PATH build/horizon-cli-2.28.0.pkg build/horizon-cli-2.28.0-signed.pkg
+          #cd pkg/mac/
+          #productsign --sign "horizon-cli-installer" --keychain $KEYCHAIN_PATH build/horizon-cli-2.28.0.pkg build/horizon-cli-2.28.0-signed.pkg
 
           
  
