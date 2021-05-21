@@ -55,6 +55,7 @@ jobs:
           sudo security import $CERTIFICATE_PATH -k $KEYCHAIN_PATH -P $HORIZON_CLI_PRIV_KEY_PW -f pkcs12 -A -t agg
           sudo security show-keychain-info $KEYCHAIN_PATH
           ls -la build/
+          sudo security add-trusted-cert -d -r trustRoot -p pkgSign -k $KEYCHAIN_PATH $CERTIFICATE_PATH
           sudo security find-identity -p basic $KEYCHAIN_PATH
           
           
