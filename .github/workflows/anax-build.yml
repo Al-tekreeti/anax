@@ -49,11 +49,11 @@ jobs:
           echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode --output $CERTIFICATE_PATH
           # create temporary keychain
           sudo security create-keychain -p $KEYCHAIN_PASSWORD $KEYCHAIN_PATH
-          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
-          security unlock-keychain -p $KEYCHAIN_PASSWORD $KEYCHAIN_PATH
+          sudo security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          sudo security unlock-keychain -p $KEYCHAIN_PASSWORD $KEYCHAIN_PATH
           # import the key into the keychain
-          security import $CERTIFICATE_PATH -k $KEYCHAIN_PATH -P $HORIZON_CLI_PRIV_KEY_PW -f pkcs12 -A -t agg
-          security show-keychain-info $KEYCHAIN_PATH
+          sudo security import $CERTIFICATE_PATH -k $KEYCHAIN_PATH -P $HORIZON_CLI_PRIV_KEY_PW -f pkcs12 -A -t agg
+          sudo security show-keychain-info $KEYCHAIN_PATH
           
           
           #make gen-mac-key
