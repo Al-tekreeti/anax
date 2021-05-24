@@ -47,7 +47,7 @@ jobs:
   
           sudo security list-keychain -d user -s $KEYCHAIN_PATH
           sudo security show-keychain-info $KEYCHAIN_PATH
-          #sudo security add-trusted-cert -d -r trustAsRoot -p pkgSign -k $KEYCHAIN_PATH $CERTIFICATE_PATH
+          sudo security add-trusted-cert -d -r trustAsRoot -p pkgSign -k $KEYCHAIN_PATH $CERTIFICATE_PATH
           sudo security find-identity -p basic $KEYCHAIN_PATH
           
           
