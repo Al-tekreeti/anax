@@ -17,7 +17,6 @@ jobs:
     env:
       GOPATH: /Users/runner/work/anax/anax/go
       #arch: amd64
-      HORIZON_CLI_PTIV_KEY_PW: ${{ secrets.PASSPHRASE }}
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
 
@@ -35,7 +34,7 @@ jobs:
       - name: Test0
         shell: bash
         run: |
-          #export HORIZON_CLI_PRIV_KEY_PW=${{secrets.PASSPHRASE}}
+          export HORIZON_CLI_PRIV_KEY_PW=${{secrets.PASSPHRASE}}
           cd ${GOPATH}/src/github.com/Al-tekreeti/anax
           go get github.com/tools/godep
           mkdir pkg/mac/build
