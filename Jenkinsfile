@@ -1,7 +1,7 @@
 pipeline {
     agent {
 	node{
-		node 'ubuntu18.04-docker-8c-8g'
+		label 'ubuntu18.04-docker-8c-8g'
 	}
     }
     stages {
