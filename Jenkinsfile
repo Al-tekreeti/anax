@@ -10,7 +10,7 @@ pipeline {
 		sh 'echo "Installing dependencies"'
 		sh '''
 		       #!/usr/bin/env bash
-		       ls -la
+		       echo $PWD
 		'''
 	    }
 	}
