@@ -11,6 +11,7 @@ pipeline {
 		sh '''
 		       #!/usr/bin/env bash
 		       echo $PWD
+		       ls -la /var/lib/jenkins/jobs/anax-build-pipeline/workspace
 		'''
 	    }
 	}
@@ -19,6 +20,7 @@ pipeline {
                 sh 'echo "Building anax binaries"'
 		sh '''
 			#!/usr/bin/env bash
+			la -la
 		'''
             }
         }
