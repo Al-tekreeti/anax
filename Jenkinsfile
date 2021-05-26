@@ -14,8 +14,8 @@ pipeline {
 		       #wget https://storage.googleapis.com/golang/go${GO_VERSION}.linux-amd64.tar.gz
 		       #tar -xf go${GO_VERSION}.linux-amd64.tar.gz
 		       #sudo mv go /usr/local
-		       /usr/local/go/bin/go get github.com/tools/godep
-		       go version
+		       #/usr/local/go/bin/go get github.com/tools/godep
+		       /usr/local/go/bin/go version
 		       #ls -la /usr/local
 		'''
 	    }
