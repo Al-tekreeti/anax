@@ -17,9 +17,6 @@ pipeline {
 		       mkdir -p $HOME/go/src/github.com/Al-tekreeti/anax
 		       export GOPATH=$HOME/go
 		       ln -fs $WORKSPACE $GOPATH/src/github.com/Al-tekreeti/anax
-		       #go get github.com/tools/godep
-		       make
-		       #ls -la /usr/local
 		'''
 	    }
 	}
@@ -28,8 +25,11 @@ pipeline {
                 sh 'echo "Building anax binaries"'
 		sh '''
 			#!/usr/bin/env bash
-			echo $HOME
-			echo $WORKSPACE
+			make
+			make -C test build-remote
+			make -C test clean 
+			make -C test test TEST_VARS="NOLOOP=1"
+ 
 		'''
             }
         }
