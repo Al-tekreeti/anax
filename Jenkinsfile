@@ -14,8 +14,11 @@ pipeline {
 		       wget https://storage.googleapis.com/golang/go${GO_VERSION}.linux-amd64.tar.gz
 		       sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz
 		       export PATH=$PATH:/usr/local/go/bin
-		       go get github.com/tools/godep
-		       #make
+		       mkdir -p $HOME/go/src/github.com/Al-tekreeti/anax
+		       export GOPATH=$HOME/go
+		       ln -fs $WORKSPACE $GOPATH/src/github.com/Al-tekreeti/anax
+		       #go get github.com/tools/godep
+		       make
 		       #ls -la /usr/local
 		'''
 	    }
