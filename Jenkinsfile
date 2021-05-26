@@ -13,7 +13,7 @@ pipeline {
 		       export GO_VERSION=1.14.1
 		       wget https://storage.googleapis.com/golang/go${GO_VERSION}.linux-amd64.tar.gz
 		       tar -xf go${GO_VERSION}.linux-amd64.tar.gz
-		       mv go /usr/local
+		       sudo mv go /usr/local
 		       /usr/local/go/bin/go get github.com/tools/godep
 		'''
 	    }
