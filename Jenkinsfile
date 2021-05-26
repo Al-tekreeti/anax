@@ -15,7 +15,7 @@ pipeline {
 		       sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz
 		       export PATH=$PATH:/usr/local/go/bin
 		       go get github.com/tools/godep
-		       make
+		       #make
 		       #ls -la /usr/local
 		'''
 	    }
@@ -25,6 +25,8 @@ pipeline {
                 sh 'echo "Building anax binaries"'
 		sh '''
 			#!/usr/bin/env bash
+			echo $HOME
+			echo $WORKSPACE
 		'''
             }
         }
