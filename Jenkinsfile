@@ -17,7 +17,11 @@ pipeline {
 		       mkdir -p $HOME/go/src/github.com/Al-tekreeti/anax
 		       export GOPATH=$HOME/go
 		       ln -fs $WORKSPACE $GOPATH/src/github.com/Al-tekreeti/anax
-		       go version
+		       make
+		       make -C test build-remote
+		       make -C test clean 
+		       make -C test test TEST_VARS="NOLOOP=1"
+		       #go version
 		'''
 	    }
 	}
@@ -26,7 +30,7 @@ pipeline {
                 sh 'echo "Building anax binaries"'
 		sh '''
 			#!/usr/bin/env bash
-			go version
+			#go version
 			#make
 			#make -C test build-remote
 			#make -C test clean 
