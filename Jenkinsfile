@@ -6,6 +6,15 @@ pipeline {
     }
     stages {
 	stage('Install Dependencies'){
+	    matrix{
+		axes{
+	            axis{
+			name 'TEST_VARS'
+			values "NOLOOP=1", "NOLOOP=1 TEST_PATTERNS=sall"
+		    }
+		}
+		
+	    }
 	    steps{
 		sh 'echo "Installing dependencies"'
 		sh '''
@@ -20,7 +29,8 @@ pipeline {
 		       make
 		       make -C test build-remote
 		       make -C test clean 
-		       make -C test test TEST_VARS="NOLOOP=1"
+		       #make -C test test TEST_VARS="NOLOOP=1"
+		       make -C test test ${TEST_VARS}
 		       #go version
 		'''
 	    }
