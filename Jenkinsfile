@@ -10,11 +10,11 @@ pipeline {
 		sh 'echo "Installing dependencies"'
 		sh '''
 		       #!/usr/bin/env bash
-		       export GO_VERSION=1.14.1
-		       wget https://storage.googleapis.com/golang/go${GO_VERSION}.linux-amd64.tar.gz
-		       sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz
-		       export PATH=$PATH:/usr/local/go/bin
-		       #/usr/local/go/bin/go get github.com/tools/godep
+		       #export GO_VERSION=1.14.1
+		       #wget https://storage.googleapis.com/golang/go${GO_VERSION}.linux-amd64.tar.gz
+		       #sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz
+		       #export PATH=$PATH:/usr/local/go/bin
+		       go get github.com/tools/godep
 		       go version
 		       #ls -la /usr/local
 		'''
