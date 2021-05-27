@@ -17,7 +17,7 @@ pipeline {
 				'''
 	    		}
 		}
-        	stage('Conduct e2e-dev-test'){
+        	stage('Build anax'){
 			matrix {
 				axes {
 					axis {
@@ -26,7 +26,7 @@ pipeline {
 					}
 				}
 				stages {
-					stage {
+					stage('Conduct e2e-dev-test') {
 						steps {
 							sh 'echo "Building anax binaries"'
 							sh '''
