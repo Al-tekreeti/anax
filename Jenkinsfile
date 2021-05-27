@@ -21,8 +21,8 @@ pipeline {
 			matrix {
 				axes {
 					axis {
-						name 'TEST_VARS'
-						values "NOLOOP=1", "NOLOOP=1 TEST_PATTERNS=sall"
+						name "tests"
+						values "NOLOOP=1", "NOLOOP=1 TEST_PATTERNS=sloc"
 					}
 				}
 				stages {
@@ -36,7 +36,7 @@ pipeline {
 							make
 							make -C test build-remote
 							make -C test clean 
-							make -C test test TEST_VARS="NOLOOP=1 TEST_PATTERNS=sloc"
+							make -C test test TEST_VARS=${tests}
 							'''
             					}
 					}
