@@ -2,7 +2,7 @@
 pipeline {
    	agent { node { label 'ubuntu18.04-docker-8c-8g' } }
     	stages {
-		stage('Install Dependencies'){
+		stage('Install dependencies'){
 	    		steps{
 				sh 'echo "Installing dependencies"'
 				sh '''
@@ -17,20 +17,31 @@ pipeline {
 				'''
 	    		}
 		}
-        	stage('Build Anax'){
-            		steps {
-                		sh 'echo "Building anax binaries"'
-				sh '''
-				#!/usr/bin/env bash
-				export GOPATH=$HOME/go
-				export PATH=$PATH:/usr/local/go/bin
-				make
-				make -C test build-remote
-				make -C test clean 
-				make -C test test TEST_VARS="NOLOOP=1 TEST_PATTERNS=sloc"
-	 
-				'''
-            		}
+        	stage('Conduct e2e-dev-test'){
+			matrix {
+				axes {
+					axis {
+						name 'TEST_VARS'
+						values "NOLOOP=1", "NOLOOP=1 TEST_PATTERNS=sall"
+					}
+				}
+				stages {
+					stage {
+						steps {
+							sh 'echo "Building anax binaries"'
+							sh '''
+							#!/usr/bin/env bash
+							export GOPATH=$HOME/go
+							export PATH=$PATH:/usr/local/go/bin
+							make
+							make -C test build-remote
+							make -C test clean 
+							make -C test test TEST_VARS="NOLOOP=1 TEST_PATTERNS=sloc"
+							'''
+            					}
+					}
+				}
+			}
         	}
     	}
 }
