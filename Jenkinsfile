@@ -24,11 +24,10 @@ pipeline {
 				#!/usr/bin/env bash
 				export GOPATH=$HOME/go
 				export PATH=$PATH:/usr/local/go/bin
-				go version
 				make
 				make -C test build-remote
 				make -C test clean 
-				make -C test test TEST_VARS="NOLOOP=1 TEST_PATTERNS=sall"
+				make -C test test TEST_VARS="NOLOOP=1 TEST_PATTERNS=sloc"
 	 
 				'''
             		}
