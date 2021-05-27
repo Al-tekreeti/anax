@@ -20,12 +20,9 @@ spec:
       - name: agent-etc-vol
         configMap:
           name: agent-configmap-horizon
-      - name: agent-cert-vol
-        secret:
-          secretName: agent-secret-cert
       containers:
       - name: anax
-        image: openhorizon/amd64_anax_k8s:testing
+        image: openhorizon/${ARCH}_anax_k8s:testing
         imagePullPolicy: Never
         volumeMounts:
         - mountPath: /var/horizon
@@ -35,8 +32,6 @@ spec:
         - mountPath: /etc/default/horizon
           subPath: horizon
           name: agent-etc-vol
-        - mountPath: /etc/default/cert
-          name: agent-cert-vol
         ports:
         - containerPort: 8510
         securityContext:

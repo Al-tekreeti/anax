@@ -7,6 +7,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/open-horizon/anax/abstractprotocol"
 	"github.com/open-horizon/anax/agreementbot/persistence"
+	"github.com/open-horizon/anax/agreementbot/secrets"
 	"github.com/open-horizon/anax/config"
 	"github.com/open-horizon/anax/events"
 	"github.com/open-horizon/anax/exchange"
@@ -25,6 +26,7 @@ import (
 const DATABASE_HEARTBEAT = "AgbotDatabaseHeartBeat"
 const GOVERN_AGREEMENTS = "AgBotGovernAgreements"
 const GOVERN_ARCHIVED_AGREEMENTS = "AgBotGovernArchivedAgreements"
+const SECRETS_PROVIDER = "AgbotSecretsProvider"
 
 //const GOVERN_BC_NEEDS = "AgBotGovernBlockchain"
 const POLICY_WATCHER = "AgBotPolicyWatcher"
@@ -56,9 +58,10 @@ type AgreementBotWorker struct {
 	noworkDispatch       int64       // The last time the NoWorkHandler was dispatched.
 	newMessagesToProcess bool        // True when the agbot has been notified (through the exchange /changes API) that there are messages to process.
 	nodeSearch           *NodeSearch // The object that controls node searches and the state of search sessions.
+	secretProvider       secrets.AgbotSecrets
 }
 
-func NewAgreementBotWorker(name string, cfg *config.HorizonConfig, db persistence.AgbotDatabase) *AgreementBotWorker {
+func NewAgreementBotWorker(name string, cfg *config.HorizonConfig, db persistence.AgbotDatabase, s secrets.AgbotSecrets) *AgreementBotWorker {
 
 	ec := worker.NewExchangeContext(cfg.AgreementBot.ExchangeId, cfg.AgreementBot.ExchangeToken, cfg.AgreementBot.ExchangeURL, cfg.AgreementBot.CSSURL, cfg.Collaborators.HTTPClientFactory)
 
@@ -75,6 +78,7 @@ func NewAgreementBotWorker(name string, cfg *config.HorizonConfig, db persistenc
 		noworkDispatch:       time.Now().Unix(),
 		newMessagesToProcess: false,
 		nodeSearch:           NewNodeSearch(),
+		secretProvider:       s,
 	}
 
 	patternManager = NewPatternManager()
@@ -300,6 +304,11 @@ func (w *AgreementBotWorker) Initialize() bool {
 
 	// Start the go thread that heartbeats to the database.
 	w.DispatchSubworker(DATABASE_HEARTBEAT, w.databaseHeartBeat, int(w.BaseWorker.Manager.Config.GetPartitionStale()/3), false)
+
+	// Start the go thread that ensures the secrets provider remains logged in.
+	if w.secretProvider != nil {
+		w.DispatchSubworker(SECRETS_PROVIDER, w.secretsProviderMaintenance, 60, false)
+	}
 
 	// Give the policy manager a chance to read in all the policies. The agbot worker will not proceed past this point
 	// until it has some policies to work with.
@@ -1451,6 +1460,22 @@ func (w *AgreementBotWorker) messageKeyCheck() int {
 		}
 	}
 
+}
+
+// This function is called by the secrets provider sub worker to ensure that the secrets provider remains logged in.
+func (w *AgreementBotWorker) secretsProviderMaintenance() int {
+
+	if !w.secretProvider.IsReady() {
+		if err := w.secretProvider.Login(); err != nil {
+			glog.Errorf(AWlogString(fmt.Sprintf("Error logging in to the secrets provider, error: %v", err)))
+		}
+	} else {
+		if err := w.secretProvider.Renew(); err != nil {
+			glog.Errorf(AWlogString(fmt.Sprintf("Error renewing secret provider token, error: %v", err)))
+		}
+	}
+
+	return 0
 }
 
 // ==========================================================================================================

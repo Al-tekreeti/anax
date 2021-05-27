@@ -10,6 +10,7 @@ import (
 	"github.com/open-horizon/anax/cli/dev"
 	"github.com/open-horizon/anax/config"
 	"github.com/open-horizon/anax/container"
+	"github.com/open-horizon/anax/cutil"
 	"github.com/open-horizon/anax/i18n"
 	"github.com/open-horizon/anax/resource"
 	"io/ioutil"
@@ -148,12 +149,8 @@ func getImage(imageName string, tagName string, dc *docker.Client) error {
 
 	// If the image was not found locally, pull it from docker.
 	if !skipPull {
-		opts := docker.PullImageOptions{
-			Repository: imageName,
-			Tag:        tagName,
-		}
-
-		if err := dc.PullImage(opts, docker.AuthConfiguration{}); err != nil {
+		domain, imagePath, _, _ := cutil.ParseDockerImagePath(imageName)
+		if _, err := cliutils.PullDockerImage(dc, domain, imagePath, tagName); err != nil {
 			return errors.New(msgPrinter.Sprintf("unable to pull CSS container using image %v, error %v. Set environment variable %v to use a different image tag.", getFSSFullImageName(), err, dev.DEVTOOL_HZN_FSS_IMAGE_TAG))
 		} else {
 			cliutils.Verbose(msgPrinter.Sprintf("Pulled docker image %v.", name))
@@ -502,11 +499,13 @@ func putFile(url string, org string, metadata *cssFileMeta, file []byte) error {
 	req.SetBasicAuth(org+"/hzndev", "password")
 
 	resp, err := httpClient.Do(req)
+	if resp != nil && resp.Body != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return errors.New(msgPrinter.Sprintf("unable to send CSS file PUT request to CSS for %v, error %v", *metadata, err))
 	}
 
-	defer resp.Body.Close()
 	cliutils.Verbose(msgPrinter.Sprintf("Received HTTP code: %d", resp.StatusCode))
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
@@ -557,6 +556,9 @@ func checkCSSStatus(org string, timeout int) error {
 		respCode := 0
 		if resp != nil {
 			respCode = resp.StatusCode
+			if resp.Body != nil {
+				resp.Body.Close()
+			}
 		}
 		c <- fmt.Sprintf("%d", respCode)
 	}()

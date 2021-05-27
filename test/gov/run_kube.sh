@@ -7,9 +7,10 @@ fi
 
 # set -x
 
-AGBOT_TEMPFS=$1
+E2EDEVTEST_TEMPFS=$1
 ANAX_SOURCE=$2
 EXCH_ROOTPW=$3
+DOCKER_TEST_NETWORK=$4
 
 NAME_SPACE="openhorizon-agent"
 CONFIGMAP_NAME="agent-configmap-horizon"
@@ -75,29 +76,46 @@ sleep 5
 # Copy binaries and other files that are needed inside the agent container.
 #
 echo "Grab binaries and config files needed inside the container"
-cp ${ANAX_SOURCE}/anax ${ANAX_SOURCE}/cli/hzn ${AGBOT_TEMPFS}/etc/agent-in-kube
+cp ${ANAX_SOURCE}/anax ${ANAX_SOURCE}/cli/hzn ${E2EDEVTEST_TEMPFS}/etc/agent-in-kube
 if [ $? -ne 0 ]; then echo "Failure copying binaries"; exit 1; fi
 
-cp ${AGBOT_TEMPFS}/certs/css.crt ${AGBOT_TEMPFS}/etc/agent-in-kube/hub.crt
-if [ $? -ne 0 ]; then echo "Failure copying CSS SSL cert"; exit 1; fi
+if [ ${CERT_LOC} -eq "1" ]; then
+	cp ${E2EDEVTEST_TEMPFS}/certs/css.crt ${E2EDEVTEST_TEMPFS}/etc/agent-in-kube/hub.crt
+	if [ $? -ne 0 ]; then echo "Failure copying CSS SSL cert"; exit 1; fi
+fi
 
 #
 # Generate config files that are specific to the runtime environment.
 #
 echo "Generate the /etc/default/horizon file based on local network configuration"
-EX_IP_MASK=$(docker network inspect e2edev_test_network | jq -r '.[].Containers | to_entries[] | select (.value.Name == "exchange-api") | .value.IPv4Address')
-CSS_IP_MASK=$(docker network inspect e2edev_test_network | jq -r '.[].Containers | to_entries[] | select (.value.Name == "css-api") | .value.IPv4Address')
+EX_IP_MASK=$(docker network inspect ${DOCKER_TEST_NETWORK} | jq -r '.[].Containers | to_entries[] | select (.value.Name == "exchange-api") | .value.IPv4Address')
+CSS_IP_MASK=$(docker network inspect ${DOCKER_TEST_NETWORK} | jq -r '.[].Containers | to_entries[] | select (.value.Name == "css-api") | .value.IPv4Address')
+AGBOT_IP_MASK=$(docker network inspect ${DOCKER_TEST_NETWORK} | jq -r '.[].Containers | to_entries[] | select (.value.Name == "agbot") | .value.IPv4Address')
 EX_IP="$(cut -d'/' -f1 <<<${EX_IP_MASK})"
 CSS_IP="$(cut -d'/' -f1 <<<${CSS_IP_MASK})"
+AGBOT_IP="$(cut -d'/' -f1 <<<${AGBOT_IP_MASK})"
 
-if [ "${EX_IP}" == "" ] || [ "${CSS_IP}" == "" ]
+if [ "${EX_IP}" == "" ] || [ "${CSS_IP}" == "" ] || [ "${AGBOT_IP}" == "" ]
 then
-	echo "Failure obtaining host IP addresses for exchange and CSS"
+	echo "Failure obtaining host IP addresses for exchange, CSS and agbot"
 	exit 1
 fi
 
-EX_IP=${EX_IP} CSS_IP=${CSS_IP} envsubst < "${AGBOT_TEMPFS}/etc/agent-in-kube/horizon.env" > "${AGBOT_TEMPFS}/etc/agent-in-kube/horizon"
+EX_IP=${EX_IP} CSS_IP=${CSS_IP} AGBOT_IP=${AGBOT_IP} envsubst < "${E2EDEVTEST_TEMPFS}/etc/agent-in-kube/horizon.env" > "${E2EDEVTEST_TEMPFS}/etc/agent-in-kube/horizon"
 if [ $? -ne 0 ]; then echo "Failure configuring agent env var file"; exit 1; fi
+
+if [ ${CERT_LOC} -eq "1" ]; then
+	depl_file="${E2EDEVTEST_TEMPFS}/etc/agent-in-kube/deployment.yaml.tmpl"
+else
+	# remove HZN_MGMT_HUB_CERT_PATH from the horizon env file
+	sed -i '/HZN_MGMT_HUB_CERT_PATH/d' ${E2EDEVTEST_TEMPFS}/etc/agent-in-kube/horizon
+
+	depl_file="${E2EDEVTEST_TEMPFS}/etc/agent-in-kube/deployment_nocert.yaml.tmpl"
+fi
+
+# create deployment.yaml file
+ARCH=${ARCH} envsubst < ${depl_file} > "${E2EDEVTEST_TEMPFS}/etc/agent-in-kube/deployment.yaml"
+if [ $? -ne 0 ]; then echo "Failure configuring k8s agent deployment template file"; exit 1; fi
 
 echo "Enable kube dns"
 $cprefix microk8s.enable dns
@@ -121,7 +139,7 @@ fi
 # Copy the agent container into the local kube container registry so that kube knows where to find it.
 #
 echo "Move agent container into microk8s container registry"
-docker save openhorizon/amd64_anax_k8s:testing > /tmp/agent-in-kube.tar
+docker save openhorizon/${ARCH}_anax_k8s:testing > /tmp/agent-in-kube.tar
 if [ $? -ne 0 ]; then echo "Failure tar-ing agent container to file"; exit 1; fi
 
 #
@@ -162,9 +180,9 @@ then
 	exit 1
 fi
 
-# Create a configmap based on ${AGBOT_TEMPFS}/etc/agent-in-kube/horizon
+# Create a configmap based on ${E2EDEVTEST_TEMPFS}/etc/agent-in-kube/horizon
 echo "Create configmap to mount horizon env file"
-$cprefix microk8s.kubectl create configmap ${CONFIGMAP_NAME} --from-file=${AGBOT_TEMPFS}/etc/agent-in-kube/horizon -n ${NAME_SPACE}
+$cprefix microk8s.kubectl create configmap ${CONFIGMAP_NAME} --from-file=${E2EDEVTEST_TEMPFS}/etc/agent-in-kube/horizon -n ${NAME_SPACE}
 RC=$?
 if [ $RC -ne 0 ]
 then
@@ -173,21 +191,22 @@ then
 	exit 1
 fi
 
-
-# Create a secret based on ${AGBOT_TEMPFS}/etc/agent-in-kube/hub.crt
-echo "Create secret to mount cert file"
-$cprefix microk8s.kubectl create secret generic ${SECRET_NAME} --from-file=${AGBOT_TEMPFS}/etc/agent-in-kube/hub.crt -n ${NAME_SPACE}
-RC=$?
-if [ $RC -ne 0 ]
-then
-	echo "Failure creating secret '${SECRET_NAME}' to mount cert file: $RC"
-	$cprefix microk8s.kubectl get secret ${SECRET_NAME} -n ${NAME_SPACE}
-	exit 1
+# Create a secret based on ${E2EDEVTEST_TEMPFS}/etc/agent-in-kube/hub.crt
+if [ ${CERT_LOC} -eq "1" ]; then
+	echo "Create secret to mount cert file"
+	$cprefix microk8s.kubectl create secret generic ${SECRET_NAME} --from-file=${E2EDEVTEST_TEMPFS}/etc/agent-in-kube/hub.crt -n ${NAME_SPACE}
+	RC=$?
+	if [ $RC -ne 0 ]
+	then
+		echo "Failure creating secret '${SECRET_NAME}' to mount cert file: $RC"
+		$cprefix microk8s.kubectl get secret ${SECRET_NAME} -n ${NAME_SPACE}
+		exit 1
+	fi
 fi
 
 # Create a persistent volume claim
 echo "Create persistent volume claim to mount db file"
-$cprefix microk8s.kubectl apply -f ${AGBOT_TEMPFS}/etc/agent-in-kube/persistent-claim.yaml
+$cprefix microk8s.kubectl apply -f ${E2EDEVTEST_TEMPFS}/etc/agent-in-kube/persistent-claim.yaml
 RC=$?
 if [ $RC -ne 0 ]
 then
@@ -201,7 +220,7 @@ sleep 2
 echo "Deploy the agent"
 # Debug help = microk8s.kubectl describe pod <pod-name> -n ${NAME_SPACE}
 # Debug help = microk8s.kubectl exec <pod-name> -it -n ${NAME_SPACE} /bin/bash
-$cprefix microk8s.kubectl apply -f ${AGBOT_TEMPFS}/etc/agent-in-kube/deployment.yaml
+$cprefix microk8s.kubectl apply -f ${E2EDEVTEST_TEMPFS}/etc/agent-in-kube/deployment.yaml
 RC=$?
 if [ $RC -ne 0 ]
 then
@@ -245,7 +264,6 @@ fi
 $cprefix microk8s.kubectl cp $PWD/gov/input_files/k8s_deploy/node.policy.json ${NAME_SPACE}/${POD}:/home/agentuser/.
 $cprefix microk8s.kubectl cp $PWD/gov/input_files/k8s_deploy/node_ui.json ${NAME_SPACE}/${POD}:/home/agentuser/.
 
-#$cprefix microk8s.kubectl exec ${POD} -it -n ${NAME_SPACE} -- /usr/bin/hzn register -f /home/agentuser/node_ui.json --policy /home/agentuser/node.policy.json -u root/root:${EXCH_ROOTPW}
-$cprefix microk8s.kubectl exec ${POD} -it -n ${NAME_SPACE} -- /usr/bin/hzn register -f /home/agentuser/node_ui.json -p e2edev@somecomp.com/sk8s -u root/root:${EXCH_ROOTPW}
+$cprefix microk8s.kubectl exec ${POD} -it -n ${NAME_SPACE} -- env ARCH=${ARCH} /usr/bin/hzn register -f /home/agentuser/node_ui.json -p e2edev@somecomp.com/sk8s -u root/root:${EXCH_ROOTPW}
 
 echo "Configured agent for policy, waiting for the agbot to start."

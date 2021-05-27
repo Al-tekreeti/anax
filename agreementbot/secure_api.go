@@ -12,6 +12,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/gorilla/mux"
 	"github.com/open-horizon/anax/agreementbot/persistence"
+	"github.com/open-horizon/anax/agreementbot/secrets"
 	"github.com/open-horizon/anax/cli/cliutils"
 	"github.com/open-horizon/anax/compcheck"
 	"github.com/open-horizon/anax/config"
@@ -35,9 +36,10 @@ type SecureAPI struct {
 	httpClient     *http.Client // a shared HTTP client instance for this worker
 	em             *events.EventStateManager
 	shutdownError  string
+	secretProvider secrets.AgbotSecrets
 }
 
-func NewSecureAPIListener(name string, config *config.HorizonConfig, db persistence.AgbotDatabase, configFile string) *SecureAPI {
+func NewSecureAPIListener(name string, config *config.HorizonConfig, db persistence.AgbotDatabase, s secrets.AgbotSecrets) *SecureAPI {
 	messages := make(chan events.Message)
 
 	listener := &SecureAPI{
@@ -45,10 +47,11 @@ func NewSecureAPIListener(name string, config *config.HorizonConfig, db persiste
 			Config:   config,
 			Messages: messages,
 		},
-		httpClient: newHTTPClientFactory().NewHTTPClient(nil),
-		name:       name,
-		db:         db,
-		em:         events.NewEventStateManager(),
+		httpClient:     newHTTPClientFactory().NewHTTPClient(nil),
+		name:           name,
+		db:             db,
+		em:             events.NewEventStateManager(),
+		secretProvider: s,
 	}
 
 	listener.listen()
@@ -104,6 +107,14 @@ func (a *SecureAPI) createUserExchangeContext(userId string, passwd string) exch
 	return exchange.NewCustomExchangeContext(userId, passwd, a.Config.AgreementBot.ExchangeURL, a.Config.GetAgbotCSSURL(), newHTTPClientFactory())
 }
 
+func (a *SecureAPI) setCommonHeaders(w http.ResponseWriter) http.ResponseWriter {
+	w.Header().Add("Cache-Control", "no-cache, no-store, must-revalidate")
+	w.Header().Add("Pragma", "no-cache, no-store")
+	w.Header().Add("Access-Control-Allow-Headers", "X-Requested-With, content-type, Authorization")
+	w.Header().Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS")
+	return w
+}
+
 // This function sets up the agbot secure http server
 func (a *SecureAPI) listen() {
 	glog.Info("Starting AgreementBot SecureAPI server")
@@ -131,22 +142,27 @@ func (a *SecureAPI) listen() {
 	}
 
 	bSecure := true
+	var nocache func(h http.Handler) http.Handler
 	if certFile == "" || keyFile == "" {
 		glog.V(3).Infof(APIlogString(fmt.Sprintf("Starting AgreementBot Remote API server in non TLS mode with address: %v:%v. The server cert file or key file is not specified in the configuration file.", apiListenHost, apiListenPort)))
 		bSecure = false
+
+		nocache = func(h http.Handler) http.Handler {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w = a.setCommonHeaders(w)
+				h.ServeHTTP(w, r)
+			})
+		}
 	} else {
 		glog.V(3).Infof(APIlogString(fmt.Sprintf("Starting AgreementBot Remote API server in secure (TLS) mode with address: %v:%v, cert file: %v, key file: %v", apiListenHost, apiListenPort, certFile, keyFile)))
-	}
 
-	nocache := func(h http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Add("Cache-Control", "no-cache, no-store, must-revalidate")
-			w.Header().Add("Pragma", "no-cache, no-store")
-			w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload")
-			w.Header().Add("Access-Control-Allow-Headers", "X-Requested-With, content-type, Authorization")
-			w.Header().Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS")
-			h.ServeHTTP(w, r)
-		})
+		nocache = func(h http.Handler) http.Handler {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w = a.setCommonHeaders(w)
+				w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload")
+				h.ServeHTTP(w, r)
+			})
+		}
 	}
 
 	// This routine does not need to be a subworker because it will terminate on its own when the main
@@ -157,6 +173,8 @@ func (a *SecureAPI) listen() {
 		router.HandleFunc("/deploycheck/policycompatible", a.policy_compatible).Methods("GET", "OPTIONS")
 		router.HandleFunc("/deploycheck/userinputcompatible", a.userinput_compatible).Methods("GET", "OPTIONS")
 		router.HandleFunc("/deploycheck/deploycompatible", a.deploy_compatible).Methods("GET", "OPTIONS")
+		router.HandleFunc("/org/{org}/secrets", a.secrets).Methods("GET", "OPTIONS")
+		router.HandleFunc("/org/{org}/secrets/{secret}", a.secrets).Methods("GET", "PUT", "POST", "DELETE", "OPTIONS")
 
 		apiListen := fmt.Sprintf("%v:%v", apiListenHost, apiListenPort)
 
@@ -519,6 +537,128 @@ func (a *SecureAPI) writeCompCheckResponse(w http.ResponseWriter, output interfa
 				}
 			}
 		}
+	}
+}
+
+// Handles secret fetch, updates and delete using the vault API
+func (a *SecureAPI) secrets(w http.ResponseWriter, r *http.Request) {
+
+	ec, msgPrinter, userAuthenticated := a.processUserCred("/org/{org}/secrets/{secret}", w, r)
+	if !userAuthenticated {
+		return
+	}
+
+	// Check if vault is configured in the management hub, and the provider is ready to handle requests.
+	if a.secretProvider == nil {
+		glog.Errorf(APIlogString("There is no secrets provider configured, secrets are unavailable."))
+		writeResponse(w, msgPrinter.Sprintf("There is no secrets provider configured, secrets are unavailable."), http.StatusServiceUnavailable)
+		return
+	}
+
+	if !a.secretProvider.IsReady() {
+		unavailMsg := "The secrets provider is not ready. The caller should retry this API call a small number of times with a short delay between calls to ensure that the secrets provider is unavailable."
+		glog.Errorf(APIlogString(unavailMsg))
+		writeResponse(w, msgPrinter.Sprintf(unavailMsg), http.StatusServiceUnavailable)
+	}
+
+	// Process in the inputs and verify that they are consistent with the logged in user.
+	pathVars := mux.Vars(r)
+	org := pathVars["org"]
+	novalue := r.URL.Query().Get("novalue")
+	vaultSecretName := pathVars["secret"]
+
+	glog.V(5).Infof(APIlogString(fmt.Sprintf("%v /org/%v/secrets/%v called.", r.Method, org, vaultSecretName)))
+
+	if org == "" {
+		glog.Errorf(APIlogString(fmt.Sprintf("org must be specified in the API path")))
+		writeResponse(w, msgPrinter.Sprintf("org must be specified in the API path"), http.StatusBadRequest)
+		return
+	}
+
+	// The user could be authenticated but might be trying to access secrets in another org.
+	if exchange.GetOrg(ec.GetExchangeId()) != org {
+		glog.Errorf(APIlogString(fmt.Sprintf("user %s cannot access secrets in org %s.", exchange.GetOrg(ec.GetExchangeId()), org)))
+		writeResponse(w, msgPrinter.Sprintf("Unauthorized. User %s cannot access secrets in org %s.", ec.GetExchangeId(), org), http.StatusForbidden)
+		return
+	}
+
+	// Handle secret API options
+	switch r.Method {
+	case "GET":
+
+		// Call the plugged in secrets provider to list the secret(s) for the input org.
+		if vaultSecretName == "" {
+			secretNames, err := a.secretProvider.ListOrgSecrets(ec.GetExchangeId(), ec.GetExchangeToken(), org)
+
+			if serr, ok := err.(secrets.ErrorResponse); err != nil && ok {
+				glog.Errorf(APIlogString(fmt.Sprintf("Unable to access secrets provider, error: %v. %v", serr, serr.Details)))
+				writeResponse(w, msgPrinter.Sprintf("Unable to access secrets provider, error: %v.", serr), serr.RespCode)
+			} else if err != nil && !ok {
+				glog.Errorf(APIlogString(fmt.Sprintf("Unable to access secrets provider, error: %v.", err)))
+				writeResponse(w, msgPrinter.Sprintf("Unable to access secrets provider, error: %v.", err), http.StatusInternalServerError)
+			} else {
+				writeResponse(w, secretNames, http.StatusOK)
+			}
+		} else {
+			secretName, err := a.secretProvider.ListOrgSecret(ec.GetExchangeId(), ec.GetExchangeToken(), org, vaultSecretName)
+
+			if serr, ok := err.(secrets.ErrorResponse); err != nil && ok && (novalue == "" || serr.RespCode != http.StatusNotFound) {
+				glog.Errorf(APIlogString(fmt.Sprintf("Unable to access secrets provider, error: %v. %v", serr, serr.Details)))
+				writeResponse(w, msgPrinter.Sprintf("Unable to access secrets provider, error: %v.", serr), serr.RespCode)
+			} else if err != nil && !ok {
+				glog.Errorf(APIlogString(fmt.Sprintf("Unable to access secrets provider, error: %v.", err)))
+				writeResponse(w, msgPrinter.Sprintf("Unable to access secrets provider, error: %v.", err), http.StatusInternalServerError)
+			} else if novalue == "1" {
+				writeResponse(w, map[string]bool{"exists" : (serr.RespCode != http.StatusNotFound)}, http.StatusOK)
+			} else {
+				writeResponse(w, secretName, http.StatusOK)
+			}
+		}
+	case "PUT":
+		fallthrough
+	case "POST":
+		var input secrets.CreateSecretRequest
+		if body, err := ioutil.ReadAll(r.Body); err != nil {
+			glog.Errorf(APIlogString(fmt.Sprintf("Unable to read request body, error: %v.", err)))
+			writeResponse(w, msgPrinter.Sprintf("Unable to read request body, error: %v.", err), http.StatusInternalServerError)
+			return
+		} else if len(body) == 0 {
+			glog.Errorf(APIlogString(fmt.Sprintf("Request body is empty.")))
+			writeResponse(w, msgPrinter.Sprintf("Request body is empty."), http.StatusBadRequest)
+			return
+		} else if uerr := json.Unmarshal(body, &input); uerr != nil {
+			glog.Errorf(APIlogString(fmt.Sprintf("Request body parse error, %v", uerr)))
+			writeResponse(w, msgPrinter.Sprintf("Request body parse error, %v", uerr), http.StatusBadRequest)
+			return
+		}
+		
+		err := a.secretProvider.CreateOrgSecret(ec.GetExchangeId(), ec.GetExchangeToken(), org, vaultSecretName, input)
+		if serr, ok := err.(secrets.ErrorResponse); err != nil && ok {
+			glog.Errorf(APIlogString(fmt.Sprintf("Unable to access secrets provider, error: %v. %v", serr, serr.Details)))
+			writeResponse(w, msgPrinter.Sprintf("Unable to access secrets provider, error: %v.", serr), serr.RespCode)
+		} else if err != nil && !ok {
+			glog.Errorf(APIlogString(fmt.Sprintf("Unable to access secrets provider, error: %v.", err)))
+			writeResponse(w, msgPrinter.Sprintf("Unable to access secrets provider, error: %v.", err), http.StatusInternalServerError)
+		} else {
+			writeResponse(w, "Secret created/updated.", http.StatusCreated)
+		}
+	case "DELETE":
+		err := a.secretProvider.DeleteOrgSecret(ec.GetExchangeId(), ec.GetExchangeToken(), org, vaultSecretName)
+
+		if serr, ok := err.(secrets.ErrorResponse); err != nil && ok {
+			glog.Errorf(APIlogString(fmt.Sprintf("Unable to access secrets provider, error: %v. %v", serr, serr.Details)))
+			writeResponse(w, msgPrinter.Sprintf("Unable to access secrets provider, error: %v.", serr), serr.RespCode)
+		} else if err != nil && !ok {
+			glog.Errorf(APIlogString(fmt.Sprintf("Unable to access secrets provider, error: %v.", err)))
+			writeResponse(w, msgPrinter.Sprintf("Unable to access secrets provider, error: %v.", err), http.StatusInternalServerError)
+		} else {
+			writeResponse(w, "Secret is deleted.", http.StatusNoContent)
+		}
+	case "OPTIONS":
+		w.Header().Set("Allow", "GET, PUT, POST, DELETE, OPTIONS")
+		w.WriteHeader(http.StatusOK)
+	default:
+		w.WriteHeader(http.StatusMethodNotAllowed)
 	}
 }
 

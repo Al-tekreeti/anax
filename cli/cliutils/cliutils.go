@@ -204,7 +204,8 @@ func NewDockerClient() (client *dockerclient.Client) {
 	return
 }
 
-// GetDockerAuth finds the docker credentials for this registry in ~/.docker/config.json
+// GetDockerAuth finds the docker credentials for this registry in ~/.docker/config.json.
+// It also will try to obtains credentials from a docker credential store if it's in use.
 func GetDockerAuth(domain string) (auth dockerclient.AuthConfiguration, err error) {
 	var auths *dockerclient.AuthConfigurations
 	if auths, err = dockerclient.NewAuthConfigurationsFromDockerCfg(); err != nil {
@@ -212,15 +213,24 @@ func GetDockerAuth(domain string) (auth dockerclient.AuthConfiguration, err erro
 	}
 
 	for domainName, creds := range auths.Configs {
-		Verbose(i18n.GetMessagePrinter().Sprintf("docker auth domainName: %v", domainName))
 		if (domainName == domain) || (domain == "" && strings.Contains(domainName, "docker.io")) {
+			Verbose(i18n.GetMessagePrinter().Sprintf("docker auth domainName: %v", domainName))
 			auth = creds
 			return
 		}
 	}
 
-	err = errors.New(i18n.GetMessagePrinter().Sprintf("unable to find docker credentials for %v", domain))
-	return
+	// try to load cred from configured credential store
+	var authPrt *dockerclient.AuthConfiguration
+	authPrt, err = dockerclient.NewAuthConfigurationsFromCredsHelpers(domain)
+	if err != nil {
+		err = errors.New(i18n.GetMessagePrinter().Sprintf("unable to load docker credentials for %s: %v", domain, err))
+		return
+	}
+	if authPrt != nil {
+		return *authPrt, nil
+	}
+	return dockerclient.AuthConfiguration{}, errors.New(i18n.GetMessagePrinter().Sprintf("unable to find docker credentials for %v", domain))
 }
 
 // PushDockerImage pushes the image to its docker registry, outputting progress to stdout. It returns the repo digest. If there is an error, it prints the error and exits.
@@ -262,7 +272,7 @@ func PushDockerImage(client *dockerclient.Client, domain, path, tag string) (dig
 
 //PullDockerImage pulls the image from the docker registry. Progress is written to stdout. Function returns the image digest.
 //If an error occurs the error is printed then the function exits.
-func PullDockerImage(client *dockerclient.Client, domain, path, tag string) (digest string) {
+func PullDockerImage(client *dockerclient.Client, domain, path, tag string) (digest string, err error) {
 	var repository string // for PullImageOptions later on
 	if domain == "" {
 		repository = path
@@ -282,18 +292,20 @@ func PullDockerImage(client *dockerclient.Client, domain, path, tag string) (dig
 	opts := dockerclient.PullImageOptions{Repository: repository, Tag: tag, OutputStream: multiWriter}
 
 	var auth dockerclient.AuthConfiguration
-	var err error
+	var loginErr error
 	loggedIn := true
-	if auth, err = GetDockerAuth(domain); err != nil {
+	if auth, loginErr = GetDockerAuth(domain); loginErr != nil {
+		Verbose(i18n.GetMessagePrinter().Sprintf("unable to get docker auth for docker.io or %s domain: %v", domain, err))
 		loggedIn = false
 	}
 
 	//Pull the image
-	if err = client.PullImage(opts, auth); err != nil {
+	if err := client.PullImage(opts, auth); err != nil {
 		if !loggedIn {
-			Fatal(CLI_GENERAL_ERROR, msgPrinter.Sprintf("unable to pull docker image %v. Docker credentials were not found. Maybe you need to run 'docker login ...' if the image registry is private. Error: %v", repository+":"+tag, err))
+			err = errors.New(msgPrinter.Sprintf("unable to pull docker image %v. Docker credentials were not found. Maybe you need to run 'docker login ...' if the image registry is private. Error: %v: %v", repository+":"+tag, err, loginErr))
 		}
-		Fatal(CLI_GENERAL_ERROR, msgPrinter.Sprintf("unable to pull docker image %v: %v", repository+":"+tag, err))
+		err = errors.New(msgPrinter.Sprintf("unable to pull docker image %v: %v", repository+":"+tag, err))
+		Verbose(err.Error())
 	}
 
 	// Get the digest value from the docker output or the image itself.
@@ -586,6 +598,9 @@ func HorizonGet(urlSuffix string, goodHttpCodes []int, structure interface{}, qu
 	req.Header.Add("Accept-Language", localeTag.String())
 
 	resp, err := httpClient.Do(req)
+	if resp != nil && resp.Body != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		if quiet {
 			if os.Getenv("HORIZON_URL") == "" {
@@ -603,7 +618,6 @@ func HorizonGet(urlSuffix string, goodHttpCodes []int, structure interface{}, qu
 			printHorizonRestError(apiMsg, err)
 		}
 	}
-	defer resp.Body.Close()
 	httpCode = resp.StatusCode
 	Verbose(msgPrinter.Sprintf("HTTP code: %d", httpCode))
 	if !isGoodCode(httpCode, goodHttpCodes) {
@@ -670,6 +684,9 @@ func HorizonDelete(urlSuffix string, goodHttpCodes []int, expectedHttpErrorCodes
 	req.Close = true
 
 	resp, err := httpClient.Do(req)
+	if resp != nil && resp.Body != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		if quiet {
 			if os.Getenv("HORIZON_URL") == "" {
@@ -687,7 +704,6 @@ func HorizonDelete(urlSuffix string, goodHttpCodes []int, expectedHttpErrorCodes
 			printHorizonRestError(apiMsg, err)
 		}
 	}
-	defer resp.Body.Close()
 	httpCode = resp.StatusCode
 	Verbose(msgPrinter.Sprintf("HTTP code: %d", httpCode))
 	if isGoodCode(httpCode, goodHttpCodes) {
@@ -760,6 +776,9 @@ func HorizonPutPost(method string, urlSuffix string, goodHttpCodes []int, body i
 		req.Header.Add("Content-Type", "application/json")
 	}
 	resp, err := httpClient.Do(req)
+	if resp != nil && resp.Body != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil && exitOnErr {
 		printHorizonRestError(apiMsg, err)
 	} else if err != nil {
@@ -767,7 +786,6 @@ func HorizonPutPost(method string, urlSuffix string, goodHttpCodes []int, body i
 	}
 
 	// Process the response
-	defer resp.Body.Close()
 	httpCode = resp.StatusCode
 	Verbose(msgPrinter.Sprintf("HTTP code: %d", httpCode))
 
@@ -1192,6 +1210,9 @@ func InvokeRestApi(httpClient *http.Client, method string, urlPath string, crede
 			http_status := ""
 			if resp != nil {
 				http_status = resp.Status
+				if resp.Body != nil {
+					resp.Body.Close()
+				}
 			}
 			if retryCount <= maxRetries {
 				Verbose(msgPrinter.Sprintf("Encountered HTTP error: %v calling %v REST API %v. HTTP status: %v. Will retry.", err, service, apiMsg, http_status))
@@ -1223,7 +1244,9 @@ func ExchangeGet(service string, urlBase string, urlSuffix string, credentials s
 	httpClient := GetHTTPClient(config.HTTPRequestTimeoutS)
 
 	resp := InvokeRestApi(httpClient, http.MethodGet, url, credentials, nil, service, apiMsg)
-	defer resp.Body.Close()
+	if resp.Body != nil {
+		defer resp.Body.Close()
+	}
 
 	respBody := io.Reader(resp.Body)
 	if resp.Header.Get("Content-type") == "application/octet-stream" {
@@ -1299,7 +1322,9 @@ func ExchangePutPost(service string, method string, urlBase string, urlSuffix st
 
 	httpClient := GetHTTPClient(config.HTTPRequestTimeoutS)
 	resp := InvokeRestApi(httpClient, method, url, credentials, body, service, apiMsg)
-	defer resp.Body.Close()
+	if resp.Body != nil {
+		defer resp.Body.Close()
+	}
 	httpCode = resp.StatusCode
 	Verbose(msgPrinter.Sprintf("HTTP code: %d", httpCode))
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
@@ -1359,7 +1384,9 @@ func ExchangeDelete(service string, urlBase string, urlSuffix string, credential
 	httpClient := GetHTTPClient(config.HTTPRequestTimeoutS)
 
 	resp := InvokeRestApi(httpClient, http.MethodDelete, url, credentials, nil, service, apiMsg)
-	defer resp.Body.Close()
+	if resp.Body != nil {
+		defer resp.Body.Close()
+	}
 
 	// delete never returns a body
 	httpCode = resp.StatusCode
@@ -1775,8 +1802,11 @@ func GetNewDockerImageName(image string, dontTouchImage bool, pullImage bool) st
 			// Push it, get the repo digest, and modify the imagePath to use the digest.
 			client := NewDockerClient()
 			digest := ""
+			var err error
 			if pullImage {
-				digest = PullDockerImage(client, domain, path, tag) // this will error out if pull fails
+				if digest, err = PullDockerImage(client, domain, path, tag); err != nil {
+					Fatal(CLI_GENERAL_ERROR, msgPrinter.Sprintf("Docker pull failure: %v", err))
+				}
 			} else {
 				digest = PushDockerImage(client, domain, path, tag) // this will error out if the push fails or can't get the digest
 			}

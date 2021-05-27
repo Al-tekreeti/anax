@@ -67,9 +67,9 @@ Required Input Variables (via flag, environment, or config file):
     HZN_EXCHANGE_URL, HZN_FSS_CSSURL, HZN_ORG_ID, either HZN_EXCHANGE_USER_AUTH or HZN_EXCHANGE_NODE_AUTH
 
 Options/Flags:
-    -c    Path to a certificate file. Default: ./$AGENT_CERT_FILE_DEFAULT . (This flag is equivalent to AGENT_CERT_FILE or HZN_MGMT_HUB_CERT_PATH)
-    -k    Path to a configuration file. Default: ./$AGENT_CFG_FILE_DEFAULT, if present. All other variables can be specified in the config file, except for INPUT_FILE_PATH (and HZN_ORG_ID if -i css: is specified). (This flag is equivalent to AGENT_CFG_FILE)
-    -i    Installation packages/files location (default: current directory). If the argument is the URL of an anax git repo release (e.g. https://github.com/open-horizon/anax/releases/download/v1.2.3) it will download the appropriate packages/files from there. If it is https://github.com/open-horizon/anax/releases , it will default to the latest release. Otherwise, if the argument begins with 'http' or 'https', it will be used as an APT repository (for debian hosts). If the argument begins with 'css:' (e.g. css:$CSS_OBJ_PATH_DEFAULT), it will download the appropriate files/packages from the MMS. If only 'css:' is specified, the default path $CSS_OBJ_PATH_DEFAULT will be added. (This flag is equivalent to INPUT_FILE_PATH)
+    -c    Path to a certificate file. Default: ./$AGENT_CERT_FILE_DEFAULT, if present. If the argument begins with 'css:' (e.g. css:$CSS_OBJ_PATH_DEFAULT), it will download the config file from the MMS. If only 'css:' is specified, the default path $CSS_OBJ_PATH_DEFAULT will be added. (This flag is equivalent to AGENT_CERT_FILE or HZN_MGMT_HUB_CERT_PATH)
+    -k    Path to a configuration file. Default: ./$AGENT_CFG_FILE_DEFAULT, if present. If the argument begins with 'css:' (e.g. css:$CSS_OBJ_PATH_DEFAULT), it will download the config file from the MMS. If only 'css:' is specified, the default path $CSS_OBJ_PATH_DEFAULT will be added. All other variables for this script can be specified in the config file, except for INPUT_FILE_PATH (and HZN_ORG_ID if -i css: is specified). (This flag is equivalent to AGENT_CFG_FILE)
+    -i    Installation packages/files location (default: current directory). If the argument is the URL of an anax git repo release (e.g. https://github.com/open-horizon/anax/releases/download/v1.2.3) it will download the appropriate packages/files from there. If it is anax: or https://github.com/open-horizon/anax/releases , it will default to the latest release. Otherwise, if the argument begins with 'http' or 'https', it will be used as an APT repository (for debian hosts). If the argument begins with 'css:' (e.g. css:$CSS_OBJ_PATH_DEFAULT), it will download the appropriate files/packages from the MMS. If only 'css:' is specified, the default path $CSS_OBJ_PATH_DEFAULT will be added. (This flag is equivalent to INPUT_FILE_PATH)
     -z    The name of your agent installation tar file. Default: ./agent-install-files.tar.gz (This flag is equivalent to AGENT_INSTALL_ZIP)
     -j    File location for the public key for an APT repository specified with '-i' (This flag is equivalent to PKG_APT_KEY)
     -t    Branch to use in the APT repo specified with -i. Default is 'updates' (This flag is equivalent to APT_REPO_BRANCH)
@@ -90,6 +90,10 @@ Options/Flags:
     -b    Skip any prompts for user input (This flag is equivalent to AGENT_SKIP_PROMPT)
     -C    Install only the horizon-cli package, not the full agent (This flag is equivalent to AGENT_ONLY_CLI)
     -h    This usage
+
+Additional Variables (in environment or config file):
+    HZN_AGBOT_URL: The URL that is used for the 'hzn agbot ...' commands.
+    HZN_SDO_SVC_URL: The URL that is used for the 'hzn voucher ...' and 'hzn sdo ...' commands.
 
 Additional Edge Device Variables (in environment or config file):
     NODE_ID_MAPPING_FILE: File to map hostname or IP to node id, for bulk install.  Default: node-id-mapping.csv
@@ -279,6 +283,8 @@ function adjust_input_file_path() {
     INPUT_FILE_PATH="${INPUT_FILE_PATH%/}"   # remove trailing / if there
     if [[ $INPUT_FILE_PATH == 'css:' ]]; then
         INPUT_FILE_PATH="$INPUT_FILE_PATH$CSS_OBJ_PATH_DEFAULT"
+    elif [[ $INPUT_FILE_PATH == 'anax:' ]]; then
+        INPUT_FILE_PATH='https://github.com/open-horizon/anax/releases/latest/download'
     elif [[ $INPUT_FILE_PATH == https://github.com/open-horizon/anax/releases* ]]; then
         if [[ $INPUT_FILE_PATH == 'https://github.com/open-horizon/anax/releases' ]]; then
             INPUT_FILE_PATH="$INPUT_FILE_PATH/latest/download"   # default to the latest release
@@ -336,11 +342,12 @@ function get_anax_release_version() {
 function get_certificate() {
     log_debug "get_certificate() begin"
 
-    local input_file_path=$1   # normally the value of INPUT_FILE_PATH
-    if [[ $input_file_path == css:* ]]; then
-            if [[ -n $AGENT_CERT_FILE && ! -f $AGENT_CERT_FILE ]]; then
-		    download_css_file "$input_file_path/$AGENT_CERT_FILE_DEFAULT"
-	    fi
+    if [[ $AGENT_CERT_FILE_CSS == css:* ]]; then
+        download_css_file "$AGENT_CERT_FILE_CSS/$AGENT_CERT_FILE_DEFAULT"   # AGENT_CERT_FILE is already set to where it will end up in this case
+    elif [[ $INPUT_FILE_PATH == css:* ]]; then
+        if [[ -n $AGENT_CERT_FILE && ! -f $AGENT_CERT_FILE ]]; then
+            download_css_file "$INPUT_FILE_PATH/$AGENT_CERT_FILE_DEFAULT"
+        fi
     fi
 
     #todo: support the case in which the mgmt hub is using a CA-trusted cert, so we don't need to use a cert at all
@@ -384,7 +391,7 @@ function download_css_file() {
             cert_flag="--cacert $AGENT_CERT_FILE"   # we got it
         fi
     fi
-    if [[ -z $cert_flag ]]; then
+    if [[ -z $cert_flag && $HZN_FSS_CSSURL == https:* ]]; then   #todo: this check still doesn't account for a CA-trusted cert
         # Still didn't find a valid cert. Get the cert from CSS by disabling cert checking
         rm -f "$AGENT_CERT_FILE"   # this probably has the error msg from the previous curl in it
         log_info "Downloading file $remote_cert_path using --insecure ..."
@@ -396,7 +403,6 @@ function download_css_file() {
             log_fatal 3 "could not download $remote_cert_path: $err_msg"
         fi
         cert_flag="--cacert $AGENT_CERT_FILE"   # we got it
-        #todo: support the case in which the mgmt hub is using a CA-trusted cert, so we don't need to use a cert at all
     fi
 
     # Get the file they asked for
@@ -418,10 +424,10 @@ function download_anax_release_file() {
     log_debug "download_anax_release_file() end"
 }
 
-# If necessary, download the cfg file from a remote location.
+# If necessary, download the cfg file from CSS.
 function download_config_file() {
     log_debug "download_config_file() begin"
-    local input_file_path=$1   # normally the value of INPUT_FILE_PATH
+    local input_file_path=$1   # normally the value of INPUT_FILE_PATH or AGENT_CFG_FILE
     if [[ $input_file_path == css:* ]]; then
         download_css_file "$input_file_path/$AGENT_CFG_FILE_DEFAULT"
     # the cfg is specific to the instance of the cluster, so not available from anax/release
@@ -440,10 +446,14 @@ function read_config_file() {
     if [[ -n $AGENT_CFG_FILE && -f $AGENT_CFG_FILE ]]; then
         :   # just fall thru this if-else to read the config file
     elif using_remote_input_files 'cfg'; then
-        if [[ -n $AGENT_CFG_FILE && $AGENT_CFG_FILE != $AGENT_CFG_FILE_DEFAULT ]]; then
-            log_fatal 1 "Can not specify both -k (AGENT_CFG_FILE) and -i (INPUT_FILE_PATH)"
+        if [[ $AGENT_CFG_FILE == css:*  ]]; then
+            download_config_file "$AGENT_CFG_FILE"   # in this case AGENT_CFG_FILE is the css object path NOT including the last part (agent-install.cfg)
+        else
+            if [[ -n $AGENT_CFG_FILE && $AGENT_CFG_FILE != $AGENT_CFG_FILE_DEFAULT ]]; then
+                log_fatal 1 "Can not specify both -k (AGENT_CFG_FILE) and -i (INPUT_FILE_PATH)"
+            fi
+            download_config_file "$INPUT_FILE_PATH"
         fi
-        download_config_file "$INPUT_FILE_PATH"
         AGENT_CFG_FILE=$AGENT_CFG_FILE_DEFAULT   # this is where download_config_file() will put it
     elif [[ -z $AGENT_CFG_FILE ]]; then
         if [[ -f $AGENT_CFG_FILE_DEFAULT ]]; then
@@ -490,6 +500,9 @@ function get_all_variables() {
     get_variable INPUT_FILE_PATH '.'
     adjust_input_file_path
     get_variable AGENT_CFG_FILE "$(get_cfg_file_default)"
+    if [[ $AGENT_CFG_FILE == 'css:' ]]; then
+        AGENT_CFG_FILE="$AGENT_CFG_FILE$CSS_OBJ_PATH_DEFAULT"   # expand the shorthand syntax
+    fi
     if [[ -n $AGENT_CFG_FILE && -f $AGENT_CFG_FILE ]] || ! using_remote_input_files 'cfg'; then
         # Read this as soon as possible, so things like HZN_ORG_ID can be specified in the cfg file
         read_config_file
@@ -503,6 +516,15 @@ function get_all_variables() {
     get_variable HZN_ORG_ID '' 'true'
     get_variable HZN_MGMT_HUB_CERT_PATH
     get_variable AGENT_CERT_FILE "${HZN_MGMT_HUB_CERT_PATH:-$AGENT_CERT_FILE_DEFAULT}"   # use the default value even if the file doesn't exist yet, because '-i css:'' might create it
+    if [[ $AGENT_CERT_FILE == 'css:' ]]; then
+        AGENT_CERT_FILE="$AGENT_CERT_FILE$CSS_OBJ_PATH_DEFAULT"   # expand the shorthand syntax
+    fi
+    if [[ $AGENT_CERT_FILE == css:* ]]; then
+        # Store the css path for the cert file, so we can change AGENT_CERT_FILE to where it will end up locally
+        AGENT_CERT_FILE_CSS=$AGENT_CERT_FILE
+        AGENT_CERT_FILE=$AGENT_CERT_FILE_DEFAULT
+        rm -f $AGENT_CERT_FILE   # they told us to download it, so don't use the file already there
+    fi
     get_variable HZN_FSS_CSSURL '' 'true'
     get_variable HZN_EXCHANGE_USER_AUTH
     get_variable HZN_EXCHANGE_NODE_AUTH
@@ -514,6 +536,8 @@ function get_all_variables() {
     # Now that we have the values from cmd line and config file, we can get all of the variables
     get_variable AGENT_SKIP_REGISTRATION 'false'
     get_variable HZN_EXCHANGE_URL '' 'true'
+    get_variable HZN_AGBOT_URL   # for now it is optional, since not every other component in the field supports it yet
+    get_variable HZN_SDO_SVC_URL   # for now it is optional, since not every other component in the field supports it yet
     get_variable NODE_ID   # deprecated
     get_variable HZN_DEVICE_ID
     get_variable HZN_NODE_ID
@@ -529,6 +553,11 @@ function get_all_variables() {
     get_variable AGENT_DEPLOY_TYPE 'device'
     get_variable AGENT_WAIT_MAX_SECONDS '30'
 
+    OS=$(get_os)
+    detect_distro   # if linux, sets: DISTRO, DISTRO_VERSION_NUM, CODENAME
+    ARCH=$(get_arch)
+    log_info "OS: $OS, Distro: $DISTRO, Distro Release: $DISTRO_VERSION_NUM, Distro Code Name: $CODENAME, Architecture: $ARCH"
+    
     if is_device; then
         get_variable NODE_ID_MAPPING_FILE 'node-id-mapping.csv'
         get_variable PKG_APT_KEY
@@ -537,12 +566,12 @@ function get_all_variables() {
     elif is_cluster; then
         # check kubectl is available
         KUBECTL=${KUBECTL:-kubectl} # the default is kubectl, or what they set in the env var
-        if command -v "$KUBECTL" >/dev/null 2>&1; then
-            : # nothing more to do
+        if command -v k3s kubectl; then
+            KUBECTL="k3s kubectl"
         elif command -v microk8s.kubectl >/dev/null 2>&1; then
             KUBECTL=microk8s.kubectl
-        elif command -v k3s kubectl; then
-            KUBECTL="k3s kubectl"
+        elif command -v "$KUBECTL" >/dev/null 2>&1; then
+            : # nothing more to do
         else
             log_fatal 2 "$KUBECTL is not available, please install $KUBECTL and ensure that it is found on your \$PATH"
         fi
@@ -557,8 +586,9 @@ function get_all_variables() {
             if [[ $KUBECTL == "microk8s.kubectl" ]]; then
                 default_image_registry_on_edge_cluster="localhost:32000/$AGENT_NAMESPACE/amd64_anax_k8s"
             elif [[ $KUBECTL == "k3s kubectl" ]]; then
+                local image_arch=$(get_image_arch)
                 local k3s_registry_endpoint=$($KUBECTL get service docker-registry-service | grep docker-registry-service | awk '{print $3;}'):5000
-                default_image_registry_on_edge_cluster="$k3s_registry_endpoint/$AGENT_NAMESPACE/amd64_anax_k8s"
+                default_image_registry_on_edge_cluster="$k3s_registry_endpoint/$AGENT_NAMESPACE/${image_arch}_anax_k8s"
             else
                 # ocp - image registry should be enabled/exposed and created in $AGENT_NAMESPACE before running agent install script
                 local default_image_registry_on_edge_cluster=$($KUBECTL get is amd64_anax_k8s -n $AGENT_NAMESPACE -o json | jq -r .status.publicDockerImageRepository)
@@ -575,11 +605,6 @@ function get_all_variables() {
     fi
 
     # Adjust some of the variable values or add related variables
-    OS=$(get_os)
-    detect_distro   # if linux, sets: DISTRO, DISTRO_VERSION_NUM, CODENAME
-    ARCH=$(get_arch)
-    log_info "OS: $OS, Distro: $DISTRO, Distro Release: $DISTRO_VERSION_NUM, Distro Code Name: $CODENAME, Architecture: $ARCH"
-
     # The edge node id can be specified 4 different ways: -d (HZN_NODE_ID), the first part of -a (HZN_EXCHANGE_NODE_AUTH), NODE_ID(deprecated) or HZN_DEVICE_ID. Need to reconcile all of them.
     local node_id   # just used in this section of code to sort out this mess
     # find the 1st occurrence of the user specifying node it
@@ -811,9 +836,14 @@ function version_gt() {
 # Return 0 (true) if we are getting this input file from a remote location
 function using_remote_input_files() {
     local whichFile=${1:-pkg}   # (optional) Can be: pkg, crt, cfg, yml, uninstall
-    if [[ $whichFile =~ ^(crt|cfg)$ ]]; then
-        # These files are specific to the instance of the cluster, so only available in CSS
+    if [[ $whichFile == 'crt' ]]; then
+        # This file is specific to the instance of the cluster, so only available in CSS
         if [[ $INPUT_FILE_PATH == css:* ]]; then
+            return 0
+        fi
+    elif [[ $whichFile == 'cfg' ]]; then
+        # This file is specific to the instance of the cluster, so only available in CSS
+        if [[ $INPUT_FILE_PATH == css:* || $AGENT_CFG_FILE == css:* ]]; then
             return 0
         fi
     else   # the other files (pkg, yml, uninstall) are available from either
@@ -945,17 +975,26 @@ function is_horizon_defaults_correct() {
     fi
 
     local horizon_defaults_value
-    # FYI, these variables are currently supported in the defaults file: HZN_EXCHANGE_URL, HZN_FSS_CSSURL, HZN_DEVICE_ID, HZN_MGMT_HUB_CERT_PATH, HZN_AGENT_PORT, HZN_VAR_BASE, HZN_NO_DYNAMIC_POLL, HZN_MGMT_HUB_CERT_PATH, HZN_ICP_CA_CERT_PATH (deprecated), CMTN_SERVICEOVERRIDE
+    # FYI, these variables are currently supported in the defaults file: HZN_EXCHANGE_URL, HZN_FSS_CSSURL, HZN_AGBOT_URL, HZN_SDO_SVC_URL, HZN_DEVICE_ID, HZN_MGMT_HUB_CERT_PATH, HZN_AGENT_PORT, HZN_VAR_BASE, HZN_NO_DYNAMIC_POLL, HZN_MGMT_HUB_CERT_PATH, HZN_ICP_CA_CERT_PATH (deprecated), CMTN_SERVICEOVERRIDE
 
     # Note: the '|| true' is so not finding the strings won't cause set -e to exit the script
     horizon_defaults_value=$(grep -E '^HZN_EXCHANGE_URL=' $defaults_file || true)
     horizon_defaults_value=$(trim_variable "${horizon_defaults_value#*=}")
     if [[ $horizon_defaults_value != $HZN_EXCHANGE_URL ]]; then return 1; fi
 
-
     horizon_defaults_value=$(grep -E '^HZN_FSS_CSSURL=' $defaults_file || true)
     horizon_defaults_value=$(trim_variable "${horizon_defaults_value#*=}")
     if [[ $horizon_defaults_value != $HZN_FSS_CSSURL ]]; then return 1; fi
+
+    # even if HZN_AGBOT_URL is empty in this script, still verify the defaults file is the same
+    horizon_defaults_value=$(grep -E '^HZN_AGBOT_URL=' $defaults_file || true)
+    horizon_defaults_value=$(trim_variable "${horizon_defaults_value#*=}")
+    if [[ $horizon_defaults_value != $HZN_AGBOT_URL ]]; then return 1; fi
+
+    # even if HZN_SDO_SVC_URL is empty in this script, still verify the defaults file is the same
+    horizon_defaults_value=$(grep -E '^HZN_SDO_SVC_URL=' $defaults_file || true)
+    horizon_defaults_value=$(trim_variable "${horizon_defaults_value#*=}")
+    if [[ $horizon_defaults_value != $HZN_SDO_SVC_URL ]]; then return 1; fi
 
     horizon_defaults_value=$(grep -E '^HZN_DEVICE_ID=' $defaults_file || true)
     horizon_defaults_value=$(trim_variable "${horizon_defaults_value#*=}")
@@ -1013,6 +1052,12 @@ function create_or_update_horizon_defaults() {
     if [[ ! -f /etc/default/horizon ]]; then
         log_info "Creating /etc/default/horizon ..."
         sudo bash -c "echo -e 'HZN_EXCHANGE_URL=${HZN_EXCHANGE_URL}\nHZN_FSS_CSSURL=${HZN_FSS_CSSURL}\nHZN_DEVICE_ID=${NODE_ID}' > /etc/default/horizon"
+        if [[ -n $HZN_AGBOT_URL ]]; then
+            sudo sh -c "echo 'HZN_AGBOT_URL=$HZN_AGBOT_URL' >> /etc/default/horizon"
+        fi
+        if [[ -n $HZN_SDO_SVC_URL ]]; then
+            sudo sh -c "echo 'HZN_SDO_SVC_URL=$HZN_SDO_SVC_URL' >> /etc/default/horizon"
+        fi
         if [[ -n $abs_certificate ]]; then
             sudo sh -c "echo 'HZN_MGMT_HUB_CERT_PATH=$abs_certificate' >> /etc/default/horizon"
         fi
@@ -1028,6 +1073,12 @@ function create_or_update_horizon_defaults() {
         log_info "Updating /etc/default/horizon ..."
         add_to_or_update_horizon_defaults 'HZN_EXCHANGE_URL' "$HZN_EXCHANGE_URL" /etc/default/horizon
         add_to_or_update_horizon_defaults 'HZN_FSS_CSSURL' "$HZN_FSS_CSSURL" /etc/default/horizon
+        if [[ -n $HZN_AGBOT_URL ]]; then
+            add_to_or_update_horizon_defaults 'HZN_AGBOT_URL' "$HZN_AGBOT_URL" /etc/default/horizon
+        fi
+        if [[ -n $HZN_SDO_SVC_URL ]]; then
+            add_to_or_update_horizon_defaults 'HZN_SDO_SVC_URL' "$HZN_SDO_SVC_URL" /etc/default/horizon
+        fi
         add_to_or_update_horizon_defaults 'HZN_DEVICE_ID' "$NODE_ID" /etc/default/horizon
         if [[ -n $abs_certificate ]]; then
             add_to_or_update_horizon_defaults 'HZN_MGMT_HUB_CERT_PATH' "$abs_certificate" /etc/default/horizon
@@ -1073,7 +1124,7 @@ function install_macos() {
         fi
     fi
 
-    get_certificate $INPUT_FILE_PATH
+    get_certificate
 
     create_or_update_horizon_defaults
 
@@ -1253,7 +1304,7 @@ function install_debian() {
         fi
     fi
 
-    get_certificate $INPUT_FILE_PATH
+    get_certificate
 
     create_or_update_horizon_defaults "$ANAX_PORT"
 
@@ -1407,7 +1458,7 @@ function install_redhat() {
         fi
     fi
 
-    get_certificate $INPUT_FILE_PATH
+    get_certificate
 
     create_or_update_horizon_defaults "$ANAX_PORT"
 
@@ -1958,7 +2009,7 @@ function check_existing_exch_node_is_correct_type() {
     else exch_creds="$HZN_ORG_ID/$HZN_EXCHANGE_NODE_AUTH"   # input checking requires either user creds or node creds
     fi
 
-    if [[ -n $AGENT_CERT_FILE ]]; then
+    if [[ -n $AGENT_CERT_FILE && -f $AGENT_CERT_FILE ]]; then
         cert_flag="--cacert $AGENT_CERT_FILE"
     fi
     local exch_output=$(curl -fsS $cert_flag $HZN_EXCHANGE_URL/orgs/$HZN_ORG_ID/nodes/$NODE_ID -u "$exch_creds" 2>/dev/null) || true
@@ -2147,6 +2198,12 @@ function create_horizon_env() {
     local cert_name=$(basename ${AGENT_CERT_FILE})
     echo "HZN_EXCHANGE_URL=${HZN_EXCHANGE_URL}" >>$HZN_ENV_FILE
     echo "HZN_FSS_CSSURL=${HZN_FSS_CSSURL}" >>$HZN_ENV_FILE
+    if [[ -n $HZN_AGBOT_URL ]]; then
+        echo "HZN_AGBOT_URL=${HZN_AGBOT_URL}" >>$HZN_ENV_FILE
+    fi
+    if [[ -n $HZN_SDO_SVC_URL ]]; then
+        echo "HZN_SDO_SVC_URL=${HZN_SDO_SVC_URL}" >>$HZN_ENV_FILE
+    fi
     echo "HZN_DEVICE_ID=${NODE_ID}" >>$HZN_ENV_FILE
     echo "HZN_MGMT_HUB_CERT_PATH=/etc/default/cert/$cert_name" >>$HZN_ENV_FILE
     echo "HZN_AGENT_PORT=8510" >>$HZN_ENV_FILE

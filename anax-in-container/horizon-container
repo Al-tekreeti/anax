@@ -11,7 +11,7 @@ Usage: $0 {start|stop|update} [index-num] [default-file]
 
 Arguments:
   index-num:      an integer number identifying this instance of horizon when running multiple horizon containers on the same host. Default is 1.
-  default-file:   a default file to use to set common environment variables for the horizon agent like HZN_EXCHANGE_URL, HZN_FSS_CSSURL, HZN_DEVICE_ID, HZN_AGENT_PORT and HZN_MGMT_HUB_CERT_PATH. If not specified and /etc/default/horizon exists on the host, that will be used.
+  default-file:   a default file to use to set common environment variables for the horizon agent like HZN_EXCHANGE_URL, HZN_FSS_CSSURL, HZN_AGBOT_URL, HZN_DEVICE_ID, HZN_AGENT_PORT and HZN_MGMT_HUB_CERT_PATH. If not specified and /etc/default/horizon exists on the host, that will be used.
 ENDUSAGE
 	exit 1
 }
@@ -165,20 +165,24 @@ start() {
 	# this is container name specific, like "horizon1" for example. 
 	fssHostSharePath=${fssBasePath}/${DOCKER_NAME}
 
-    # clean up everything under the container name directory
-	# just incase there are left over files by other user
-	# especially the ones that are not readable by the login user 
-	if [ -d $fssHostSharePath ]; then
-		rm -Rf $fssHostSharePath 2>/dev/null 
-		if [ $? -ne 0 ]; then
-			echo "sudo rm -Rf $fssHostSharePath"
-			sudo rm -Rf $fssHostSharePath
+    if [[ "$2" != "updating" ]]; then
+		# clean up everything under the container name directory
+		# just incase there are left over files by other user
+		# especially the ones that are not readable by the login user 
+		if [ -d $fssHostSharePath ]; then
+			rm -Rf $fssHostSharePath 2>/dev/null 
+			if [ $? -ne 0 ]; then
+				echo "sudo rm -Rf $fssHostSharePath"
+				sudo rm -Rf $fssHostSharePath
+			fi
 		fi
-	fi
 
-	# create fss domain socket path and ess auth path
-	mkdir -p ${fssHostSharePath}/fss-domain-socket
-	mkdir -p ${fssHostSharePath}/ess-auth
+		# create fss domain socket path and ess auth path
+		mkdir -p ${fssHostSharePath}/fss-domain-socket
+		mkdir -p ${fssHostSharePath}/ess-auth
+	else
+		: # updating will keep files inside $fssHostSharePath
+	fi
 
 	# for mac, docker container has the filesystem privilge of the login user instead of root
 	# even if the `docker run` command was run by a root user.
@@ -210,7 +214,14 @@ start() {
 	# Get the horizon image. The image version is the same as the hzn CLI version unless it is
 	# overwitten by $HC_DOCKER_IMAGE and $HC_DOCKER_TAG.
 	# $HC_DOCKER_IMAGE and $HC_DOCKER_TAG are intentionally undocumented env vars that allow us to test the staging version of the docker image
-	dockerImage='openhorizon/amd64_anax'
+
+	# get the architecture from hzn
+        arch=$(LANG=en_US hzn architecture)
+        if [ $? -ne 0 ]; then
+                arch="amd64"
+        fi
+
+	dockerImage='openhorizon/'$arch'_anax'
 	dockerTag='latest'
 	if [[ -n "$HC_DOCKER_IMAGE" ]]; then
 		dockerImage="$HC_DOCKER_IMAGE"

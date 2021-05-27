@@ -27,7 +27,7 @@ function checkOrganizationsInMMS {
   for (( ix=0; ix<$3; ix++ ))
   do
     org1=$(echo $2 | jq '.['${ix}']."org-id"' | tr -d '"')
-    
+
     if [ "$org1" == "$1" ]; then
       echo "Find org $1 in CSS"
       found=true
@@ -148,9 +148,9 @@ export HZN_HTTP_TIMEOUT="1"
 
 hzn mms object publish -m /tmp/meta.json -f /tmp/data.txt
 RC=$?
-if [ $RC -eq 5 ]
+if [ $RC -eq 5 ] || [ $RC -eq 0 ]
 then
-  echo -e "Got expected error with 512MB/128MB (Local/Remote) object upload using short HTTP request timeout: $RC"
+  echo -e "Got expected error/return code with 512MB/128MB (Local/Remote) object upload using short HTTP request timeout: $RC"
 else
   echo -e "Got unexpected error with 512MB/128MB (Local/Remote) object upload using short HTTP request timeout: $RC"
   exit -1
@@ -799,13 +799,13 @@ verifyUserAccessForPublicObject $USER_ORG $NODE_ID $NODE_TOKEN $PUBLIC_OBJ_ORG $
 # root/hubadmin should be able to create object in IBM org
 USER_ORG="root"
 USER_REG_USERNAME="hubadmin"
-USER_REG_USERPWD="hubadminpw"
+USER_REG_USERPWD="${EXCHANGE_HUB_ADMIN_PW}"
 verifyAdminUserCanCreatePublicObject $USER_ORG $USER_REG_USERNAME $USER_REG_USERPWD $PUBLIC_OBJ_ORG
 
 # ibm org admin should be able to create object in IBM org
 USER_ORG="IBM"
 USER_REG_USERNAME="ibmadmin"
-USER_REG_USERPWD="ibmadminpw"
+USER_REG_USERPWD="${EXCHANGE_SYSTEM_ADMIN_PW}"
 verifyAdminUserCanCreatePublicObject $USER_ORG $USER_REG_USERNAME $USER_REG_USERPWD $PUBLIC_OBJ_ORG
 
 # set back to the value before sync service testing

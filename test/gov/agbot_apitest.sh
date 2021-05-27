@@ -5,9 +5,13 @@ USERDEV_ADMIN_AUTH="userdev/userdevadmin:userdevadminpw"
 
 PREFIX="Agbot API Test:"
 
-
 echo ""
 echo -e "${PREFIX} Start testing compatibility"
+
+if [ -z ${AGBOT_SAPI_URL} ]; then
+  echo -e "\n${PREFIX} Envvar AGBOT_SAPI_URL is empty. Skip test\n"
+  exit 0
+fi
 
 COMP_RESULT=""
 
@@ -38,14 +42,18 @@ function results {
     exit 2
   fi
 
-  # check if error text
-  if [ ! -z "$3" ]; then
-    res=$(echo "$1" | grep "$3")
-    if [ $? -ne 0 ]; then
-      echo -e "Error: the response should have contained \"$3\", but did not. "
-      exit 2
+  # check if error text contains all of the test text snippets
+  for (( i=3; i<=$#; i++))
+  {
+    eval TEST_ARG='$'$i
+    if [ ! -z "$TEST_ARG" ]; then
+      res=$(echo "$1" | grep "$TEST_ARG")
+      if [ $? -ne 0 ]; then
+        echo -e "Error: the response should have contained \"$TEST_ARG\", but did not. \n"
+        exit 2
+      fi
     fi
-  fi
+  }
 
   #statements
   echo -e "Result expected."
@@ -69,7 +77,7 @@ function check_comp_results {
   if [ ! -z "$2" ]; then
     res=$(echo "$reason" | grep "$2")
     if [ $? -ne 0 ]; then
-      echo -e "Error: the reason should have contained \"$2\", but not. "
+      echo -e "Error: the reason should have contained \"$2\", but not. \n"
       exit 2
     fi
   fi
@@ -81,20 +89,19 @@ function run_and_check {
   local api="$1"
   local comp_input="$2"
   echo "$comp_input" | jq -r '.'
-  CMD="curl -LX GET -w %{http_code} --cacert ${CERT_FILE} -u ${USERDEV_ADMIN_AUTH} --data @- ${AGBOT_SAPI_URL}/${api}"
+  CMD="curl -LX GET -w %{http_code} ${CERT_VAR} -u ${USERDEV_ADMIN_AUTH} --data @- ${AGBOT_SAPI_URL}/${api}"
   echo "$CMD"
-  RES=$(echo "$comp_input" | curl -sLX GET -w %{http_code} --cacert ${CERT_FILE} -u ${USERDEV_ADMIN_AUTH} --data @- ${AGBOT_SAPI_URL}/${api})
+  RES=$(echo "$comp_input" | curl -sLX GET -w %{http_code} ${CERT_VAR} -u ${USERDEV_ADMIN_AUTH} --data @- ${AGBOT_SAPI_URL}/${api})
   results "$RES" "$3" "$4"
 }
 
 # get the cert file
-if [ "${EXCH_APP_HOST}" = "http://exchange-api:8080/v1" ]; then
-  CERT_FILE="/home/agbotuser/keys/agbotapi.crt"
+if [ ${CERT_LOC} -eq "1" ]; then
+  CERT_VAR="--cacert /certs/agbotapi.crt"
 else
-  # agbot is remote
-  CERT_FILE="/certs/agbotapi.crt"
+  CERT_VAR=""
 fi
-echo -e "${PREFIX} the cert file name is $CERT_FILE"
+
 echo -e "${PREFIX} the agbot secure api url is $AGBOT_SAPI_URL"
 
 for api in "deploycheck/policycompatible" "deploycheck/userinputcompatible" "deploycheck/deploycompatible"
@@ -102,25 +109,30 @@ do
   echo ${api}
 
   echo -e "\n${PREFIX} test /${api} with unauthorized user."
-  CMD="curl -sLX GET -w %{http_code} --cacert ${CERT_FILE} -u myorg/me:passwd ${AGBOT_SAPI_URL}/${api}"
+  CMD="curl -sLX GET -w %{http_code} ${CERT_VAR} -u myorg/me:passwd ${AGBOT_SAPI_URL}/${api}"
   echo "$CMD"
   RES=$($CMD)
   results "$RES" "401" "Failed to authenticate"
 
-  echo -e "\n${PREFIX} test /${api} without cert"
-  CMD="curl -LX GET -w %{http_code} -u myorg/me:passwd ${AGBOT_SAPI_URL}/${api}"
-  echo "$CMD"
-  RES=$($CMD 2>&1)
-  echo "$RES" | grep "SSL certificate problem"
-  if [ $? -ne 0 ]; then
-    echo -e "${PREFIX} the output should contain 'CRLfile: none', but not\n"
-    exit 2
+
+  if [ -z "${AGBOT_SAPI_URL##https://*}" ]; then
+    echo -e "\n${PREFIX} test /${api} without cert"
+    CMD="curl -LX GET -w %{http_code} -u myorg/me:passwd ${AGBOT_SAPI_URL}/${api}"
+    echo "$CMD"
+    RES=$($CMD 2>&1)
+    echo "$RES" | grep "SSL certificate problem"
+    if [ $? -ne 0 ]; then
+      echo -e "${PREFIX} the output should contain 'CRLfile: none', but not\n"
+      exit 2
+    else
+      echo -e "Result expected\n"
+    fi
   else
-    echo -e "Result expected\n"
-  fi
+    echo -e "\n${PREFIX} Skip test without cert because of http protocol in envvar AGBOT_SAPI_URL: ${AGBOT_SAPI_URL}"
+  fi	  
 
   echo -e "\n${PREFIX} test /${api} without input."
-  CMD="curl -sLX GET -w %{http_code} --cacert ${CERT_FILE} -u ${E2EDEV_ADMIN_AUTH} ${AGBOT_SAPI_URL}/${api}"
+  CMD="curl -sLX GET -w %{http_code} ${CERT_VAR} -u ${E2EDEV_ADMIN_AUTH} ${AGBOT_SAPI_URL}/${api}"
   echo "$CMD"
   RES=$($CMD)
   results "$RES" "400" "No input found"
@@ -242,7 +254,7 @@ read -d '' comp_input <<EOF
     "service": {
       "name": "https://bluehorizon.network/services/gpstest",
       "org": "e2edev@somecomp.com",
-      "arch": "amd64",
+      "arch": "${ARCH}",
       "serviceVersions": [
         {
           "version": "1.0.0",
@@ -295,7 +307,7 @@ read -d '' node_ui_bad <<EOF
   {
     "serviceOrgid": "e2edev@somecomp.com",
     "serviceUrl": "https://bluehorizon.network/services/locgps",
-    "serviceArch": "amd64",
+    "serviceArch": "${ARCH}",
     "serviceVersionRange": "2.0.3",
     "inputs": [
       {
@@ -439,11 +451,101 @@ read -d '' comp_input <<EOF
   "node_user_input":  $node_ui,
   "pattern":          $pattern_sloc,
   "service":          [$service_location],
-  "node_arch":        "amd64"
+  "node_arch":        "${ARCH}"
  }
 EOF
 run_and_check "deploycheck/deploycompatible" "$comp_input" "200" ""
 check_comp_results "false" "User Input Incompatible"
 
+echo ""
+echo -e "${PREFIX} Start testing for vault secrets API"
+
+if [ "$HZN_VAULT" != "true" ] || [ "$NOVAULT" == "1" ]; then
+  echo -e "\n${PREFIX} Skipping agbot API tests for vault\n"
+  exit 0
+fi
+
+# Later export these from /root/init_vault
+TEST_VAULT_SECRET_ORG="userdev"
+TEST_VAULT_SECRET_NAME="secret"
+TEST_VAULT_SECRET_VALUE="${TEST_VAULT_SECRET_NAME}"
+
+read -d '' create_secret <<EOF
+{
+  \"name\":\"test\",
+  \"secret\":\"value\"
+}
+EOF
+
+LIST_ORG_SECRET="org/${TEST_VAULT_SECRET_ORG}/secrets/${TEST_VAULT_SECRET_NAME}"
+LIST_ORG_SECRETS="org/${TEST_VAULT_SECRET_ORG}/secrets"
+CREATE_ORG_SECRETS="org/${TEST_VAULT_SECRET_ORG}/secrets/secret1"
+DELETE_ORG_SECRETS="org/${TEST_VAULT_SECRET_ORG}/secrets/secret1"
+
+echo -e "\n${PREFIX} test ${LIST_ORG_SECRET} GET"
+CMD="curl -sLX GET -w %{http_code} ${CERT_VAR} -u ${USERDEV_ADMIN_AUTH} ${AGBOT_SAPI_URL}/${LIST_ORG_SECRET}"
+echo "$CMD"
+RES=$($CMD)
+results "$RES" "200" "${TEST_VAULT_SECRET_VALUE}"
+
+echo -e "\n${PREFIX} test ${LIST_ORG_SECRETS} GET"
+CMD="curl -sLX GET -w %{http_code} ${CERT_VAR} -u ${USERDEV_ADMIN_AUTH} ${AGBOT_SAPI_URL}/${LIST_ORG_SECRETS}"
+echo "$CMD"
+RES=$($CMD)
+results "$RES" "200" "${TEST_VAULT_SECRET_NAME}"
+
+echo -e "\n${PREFIX} test ${CREATE_ORG_SECRETS} POST"
+CMD="curl -sLX POST -w %{http_code} ${CERT_VAR} -u ${USERDEV_ADMIN_AUTH} -d ${create_secret} ${AGBOT_SAPI_URL}/${CREATE_ORG_SECRETS}"
+echo "$CMD"
+RES=$(curl -sLX POST -w %{http_code} ${CERT_VAR} -u ${USERDEV_ADMIN_AUTH} -d "${create_secret}" ${AGBOT_SAPI_URL}/${CREATE_ORG_SECRETS})
+results "$RES" "201" ""
+
+echo -e "\n${PREFIX} test ${LIST_ORG_SECRET} GET"
+CMD="curl -sLX GET -w %{http_code} ${CERT_VAR} -u ${USERDEV_ADMIN_AUTH} ${AGBOT_SAPI_URL}/${LIST_ORG_SECRET}1"
+echo "$CMD"
+RES=$($CMD)
+results "$RES" "200" "test" "value"
+
+echo -e "\n${PREFIX} test ${LIST_ORG_SECRET} GET with novalue=1"
+CMD="curl -sLX GET -w %{http_code} ${CERT_VAR} -u ${USERDEV_ADMIN_AUTH} ${AGBOT_SAPI_URL}/${LIST_ORG_SECRET}?novalue=1"
+echo "$CMD"
+RES=$($CMD)
+results "$RES" "200" "true"
+
+echo -e "\n${PREFIX} test ${LIST_ORG_SECRET} GET"
+CMD="curl -sLX GET -w %{http_code} ${CERT_VAR} -u ${USERDEV_ADMIN_AUTH} ${AGBOT_SAPI_URL}/${LIST_ORG_SECRET}_wrong?novalue=1"
+echo "$CMD"
+RES=$($CMD)
+results "$RES" "200" "false"
+
+echo -e "\n${PREFIX} test ${LIST_ORG_SECRET} GET with invalid credentials"
+CMD="curl -sLX GET -w %{http_code} ${CERT_VAR} -u ${USERDEV_ADMIN_AUTH}_wrong ${AGBOT_SAPI_URL}/${LIST_ORG_SECRET}"
+echo "$CMD"
+RES=$($CMD)
+results "$RES" "401" "Failed to authenticate"
+
+echo -e "\n${PREFIX} test ${LIST_ORG_SECRET} GET with invalid secret and secret org"
+CMD="curl -sLX GET -w %{http_code} ${CERT_VAR} -u ${USERDEV_ADMIN_AUTH} ${AGBOT_SAPI_URL}/${LIST_ORG_SECRET}_wrong"
+echo "$CMD"
+RES=$($CMD)
+results "$RES" "404" ""
+
+echo -e "\n${PREFIX} test ${LIST_ORG_SECRET} GET with invalid org"
+CMD="curl -sLX GET -w %{http_code} ${CERT_VAR} -u ${USERDEV_ADMIN_AUTH} ${AGBOT_SAPI_URL}/org/${TEST_VAULT_SECRET_ORG}_wrong/secrets"
+echo "$CMD"
+RES=$($CMD)
+results "$RES" "403" ""
+
+echo -e "\n${PREFIX} test ${DELETE_ORG_SECRETS} DELETE with valid secret and secret org"
+CMD="curl -sLX DELETE -w %{http_code} ${CERT_VAR} -u ${USERDEV_ADMIN_AUTH} ${AGBOT_SAPI_URL}/${DELETE_ORG_SECRETS}"
+echo "$CMD"
+RES=$($CMD)
+results "$RES" "204" ""
+
+echo -e "\n${PREFIX} test ${LIST_ORG_SECRET} GET with deleted secret"
+CMD="curl -sLX GET -w %{http_code} ${CERT_VAR} -u ${USERDEV_ADMIN_AUTH} ${AGBOT_SAPI_URL}/${LIST_ORG_SECRET}1"
+echo "$CMD"
+RES=$($CMD)
+results "$RES" "404" ""
 
 echo -e "\n${PREFIX} complete test\n"
